@@ -103,6 +103,7 @@ Kshapptemp2 <- list()
 Kshapptemp3 <- list()
 Kshapptemp4 <- list()
 KshappM <- list()
+
 for(i in 1:2){
 	#omit negative ksh values
 	for(j in 1:16){
@@ -111,5 +112,27 @@ for(i in 1:2){
 	}
 	Kshapptemp4[[i]] <- ldply(Kshapptemp3,data.frame)
 	KshappM[[i]] <- aggregate(Kshapptemp4[[i]]$K, by=list(Kshapptemp4[[i]]$doy,Kshapptemp4[[i]]$sensor),FUN="min")
-
+	colnames(KshappM[[i]]) <- c("doy","sensor","K")
+	
 }
+
+#organize back into matrix
+KshAppt1 <- list()
+KshAppt2 <- list()
+KshApp <- list()
+KshCheck <- list()
+for(i in 1:2){
+
+	for(j in 1:16){
+		
+		KshAppt1[[j]] <- join(Time[[i]],KshappM[[i]][KshappM[[i]]$sensor==j,],by="doy",type="left")
+		KshAppt2[[j]] <- KshAppt1[[j]]$K
+	}	
+		KshApp[[i]] <- matrix(unlist(KshAppt2),byrow=FALSE,ncol=16)
+}
+
+#radial heat flow: Qr
+#Qr = c*ksh apparent
+#
+
+
