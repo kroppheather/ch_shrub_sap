@@ -65,6 +65,9 @@ SA <- list(gLA$stem.area,lLA$stem.area)
 #time info
 Time <- list(datG[,1:3],datL[,1:3])
 
+#sensor info
+sensor <- list(gLA,lLA)
+
 #calculations:
 
 #Qv = Kst * SA (B-A)/ dx * 0.40 mV/C
@@ -120,7 +123,7 @@ for(i in 1:2){
 KshAppt1 <- list()
 KshAppt2 <- list()
 KshApp <- list()
-KshCheck <- list()
+
 for(i in 1:2){
 
 	for(j in 1:16){
@@ -133,6 +136,56 @@ for(i in 1:2){
 
 #radial heat flow: Qr
 #Qr = c*ksh apparent
-#
+Qrtemp <- list()
+Qr <- list()
+
+for(i in 1:2){
+
+	for(j in 1:16){
+		Qrtemp[[j]] <- C[[i]][,j]*KshApp[[i]][,j] 
+	}
+	Qr[[i]] <- matrix(unlist(Qrtemp),byrow=FALSE,ncol=16)
+}	
+	
+#calculate Qf:
+#Qf= Pin-Qv-Qr
+
+Qftemp <- list()
+Qf <- list()
+for(i in 1:2){
+
+	for(j in 1:16){
+		Qftemp[[j]] <- Pin[[i]][,j] - Qv[[i]][,j] - Qr[[i]][,j] 
+	}
+	Qf[[i]] <- matrix(unlist(Qftemp),byrow=FALSE,ncol=16)
+}	
 
 
+#calculate sapflow in g/s
+#Flow= Qf/(Dt*4.186)
+#need to set to zero when low flow conditions occur
+Flowtemp <- list()
+Flow <- 	list()
+
+for(i in 1:2){
+
+	for(j in 1:16){
+		
+		Flowtemp[[j]] <- ifelse(is.na(Qf[[i]][,j])|is.na(Pin[[i]][,j])|is.na(dT[[i]][,j]),NA,
+							ifelse(Qf[[i]][,j]<(0.2*Pin[[i]][,j])|Qf[[i]][,j]<0|dT[[i]][,j]<0.75,
+									0,Qf[[i]][,j] / (dT[[i]][,j]*4.186)))
+	}
+	Flow[[i]] <- matrix(unlist(Flowtemp),byrow=FALSE,ncol=16)
+}	
+
+#calculate sap flow and normalize for leaf area
+FlowLtemp <- list()
+FlowL <- 	list()
+
+for(i in 1:2){
+
+	for(j in 1:16){
+		FlowLtemp[[j]] <- Flow[[i]][,j]/sensor[[i]]$LA[j]
+	}
+	FlowL[[i]] <- matrix(unlist(FlowLtemp),byrow=FALSE,ncol=16)
+}	
