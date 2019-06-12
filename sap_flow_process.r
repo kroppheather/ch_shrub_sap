@@ -189,3 +189,14 @@ for(i in 1:2){
 	}
 	FlowL[[i]] <- matrix(unlist(FlowLtemp),byrow=FALSE,ncol=16)
 }	
+
+
+#add time information to sapflow data in g m-2 s-1
+#german is first in list
+sapFlow <- list()
+for(i in 1:2){
+	
+	sapFlow[[i]] <- cbind(Time[[i]],FlowL[[i]])
+}
+
+rm(list=setdiff(ls(), c("sapFlow","sensor")))
