@@ -205,7 +205,9 @@ for(i in 1:2){
 sapFlow <- list()
 for(i in 1:2){
 	
-	sapFlow[[i]] <- cbind(Time[[i]],FlowL[[i]])
+	sapFlow[[i]] <- data.frame(doy=rep(Time[[i]]$doy,times=16),year=rep(Time[[i]]$year,times=16),
+							hour=rep(Time[[i]]$hour,times=16),sapF=as.vector(FlowL[[i]]), 
+							sensor=rep(seq(1,16),each=dim(Time[[i]])[1]))
 }
 
 rm(list=setdiff(ls(), c("sapFlow","sensor")))
