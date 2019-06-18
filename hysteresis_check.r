@@ -7,6 +7,8 @@
 ######################## inputs:                           ########################
 ######################## sensor (list) sensor info         ########################
 ######################## sapFlow (list) sapflow g m-2 s-1  ########################
+######################## specFlow is species averager sap  ######################## 
+######################## flow                              ######################## 
 ######################## list item 1 is flood plain and    ########################
 ######################## list item 2 is low density        ########################
 ###################################################################################
@@ -67,8 +69,10 @@ met <- list(datG,datLR)
 
 for(i in 1:2){
 	sapFlow[[i]] <- join(sapFlow[[i]],met[[i]], by=c("doy","hour"), type="left")
+	specFlow[[i]] <- join(specFlow[[i]],met[[i]], by=c("doy","hour"), type="left")
 
 }
+
 
 
 ##################################
@@ -98,10 +102,6 @@ for(i in 1:2){
 	days[[i]] <- days[[i]][days[[i]]$minD!=Inf,]
 }
 
-#convert sapflow zeros to NA
-for(i in 1:2){
-	sapFlow[[i]]$sapFz <- ifelse(sapFlow[[i]]$sapF==0,NA,sapFlow[[i]]$sapF)
-}
 
 
 #make plots of the sensors on each day
@@ -112,12 +112,12 @@ nameS <- c("floodplain","upland")
 for(i in 1:2){
 	
 	for(k in 1:dim(days[[i]])[1]){
-		png(paste0(plotDI,"\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
+		png(paste0(plotDI,"\\sensors\\D\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
 			plot(c(0,1),c(0,1), type="n", xlim=c(days[[i]]$minD[k],days[[i]]$maxD[k]),
-				ylim=c(days[[i]]$minS[k],days[[i]]$maxS[k]), xlab="VPD",ylab="sapflow",xaxs="i",yaxs="i")
+				ylim=c(days[[i]]$minS[k],days[[i]]$maxS[k]), xlab="VPD",ylab="sapflow")
 			for(j in 1:16){	
 				points(sapFlow[[i]]$D[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
-				sapFlow[[i]]$sapFz[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
+				sapFlow[[i]]$sapF[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
 				type="b",pch=19,col=coli[j])
 				
 			}
@@ -130,16 +130,61 @@ for(i in 1:2){
 for(i in 1:2){
 	
 	for(k in 1:dim(days[[i]])[1]){
-		png(paste0(plotDI,"\\hour",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
+		png(paste0(plotDI,"\\sensors\\hour\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
 			plot(c(0,1),c(0,1), type="n", xlim=c(0,24),
-				ylim=c(days[[i]]$minS[k],days[[i]]$maxS[k]), xlab="VPD",ylab="sapflow",xaxs="i",yaxs="i")
+				ylim=c(days[[i]]$minS[k],days[[i]]$maxS[k]), xlab="VPD",ylab="sapflow")
 			for(j in 1:16){	
 				points(sapFlow[[i]]$hour[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
-				sapFlow[[i]]$sapFz[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
+				sapFlow[[i]]$sapF[sapFlow[[i]]$sensor==j&sapFlow[[i]]$doy==days[[i]]$doy[k]],
 				type="b",pch=19,col=coli[j])
 				
 			}
 	dev.off()		
 	}
 }
-sapFlow[[2]][sapFlow[[2]]$sensor==2&sapFlow[[2]]$doy==days[[2]]$doy[8],]
+
+days2 <- list()
+for(i in 1:2){
+	days2[[i]] <- unique(data.frame(doy=specFlow[[i]]$doy))
+}
+days2[[2]] <- days2[[2]][days2[[2]]$doy>183,]
+
+cols <- c("tomato3","cornflowerblue")
+#get unique species data frame
+specName <- list()
+for(i in 1:2){
+	specName[[i]] <- unique(data.frame(species=specFlow[[i]]$species))
+}
+#look at species average
+for(i in 1:2){
+	for(k in 1:dim(days2[[i]])[1]){
+	png(paste0(plotDI,"\\species\\D\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
+		plot(specFlow[[i]]$D[specFlow[[i]]$doy==days2[[i]]$doy[k]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]], 
+			type="n",
+			xlab="VPD",ylab="sapflow")
+		for(j in 1:2){
+			points(specFlow[[i]]$D[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			pch=19,col=cols[j],type="b")
+		}
+	dev.off()	
+	}	
+}	
+
+#look at species average
+for(i in 1:2){
+	for(k in 1:dim(days2[[i]])[1]){
+	png(paste0(plotDI,"\\species\\hour\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
+		plot(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]], 
+			type="n",
+			xlab="hour",ylab="sapflow")
+		for(j in 1:2){
+			points(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			pch=19,col=cols[j],type="b")
+		}
+	dev.off()	
+	}	
+}

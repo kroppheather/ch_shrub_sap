@@ -181,20 +181,22 @@ for(i in 1:2){
 	for(j in 1:16){
 		
 		Flowtemp[[j]] <- ifelse(is.na(Qf[[i]][,j])|is.na(Pin[[i]][,j])|is.na(dT[[i]][,j]),NA,
-							ifelse(Qf[[i]][,j]<(0.2*Pin[[i]][,j])|Qf[[i]][,j]<0|dT[[i]][,j]<0.75,
-									0,Qf[[i]][,j] / (dT[[i]][,j]*4.186)))
+							ifelse(Qf[[i]][,j]<(0.2*Pin[[i]][,j]) & dT[[i]][,j] <0.75,0,
+								ifelse(Qf[[i]][,j]<0,0,
+								ifelse(dT[[i]][,j] <=0,NA,
+									Qf[[i]][,j] / (dT[[i]][,j]*4.186)))))
 	}
 	Flow[[i]] <- matrix(unlist(Flowtemp),byrow=FALSE,ncol=16)
 }	
 
-#calculate sap flow and normalize for leaf area
+
 FlowLtemp <- list()
 FlowL <- 	list()
 
 for(i in 1:2){
 
 	for(j in 1:16){
-		FlowLtemp[[j]] <- Flow[[i]][,j]/sensor[[i]]$LA[j]
+		FlowLtemp[[j]] <- ifelse(is.na(Flow[[i]][,j]),NA,Flow[[i]][,j]/sensor[[i]]$LA[j])
 	}
 	FlowL[[i]] <- matrix(unlist(FlowLtemp),byrow=FALSE,ncol=16)
 }	
@@ -206,8 +208,53 @@ sapFlow <- list()
 for(i in 1:2){
 	
 	sapFlow[[i]] <- data.frame(doy=rep(Time[[i]]$doy,times=16),year=rep(Time[[i]]$year,times=16),
-							hour=rep(Time[[i]]$hour,times=16),sapF=as.vector(FlowL[[i]]), 
+							hour=rep(Time[[i]]$hour,times=16),
+							sapF=ifelse(as.vector(FlowL[[i]])>quantile(as.vector(FlowL[[i]]),prob=0.95,na.rm=TRUE),NA, 
+								as.vector(FlowL[[i]])),
 							sensor=rep(seq(1,16),each=dim(Time[[i]])[1]))
+							
+
 }
 
-rm(list=setdiff(ls(), c("sapFlow","sensor")))
+#aggregate sap flow across species
+specDF <- list()
+for(i in 1:2){
+	specDF[[i]] <- data.frame(sensor=sensor[[i]]$Sensor..,species=sensor[[i]]$species)
+}
+
+#join species info into the sensor
+temp1 <- list()
+for(i in 1:2){
+	temp1[[i]] <- join(sapFlow[[i]],specDF[[i]],by="sensor",type="left")
+}
+
+#aggregate by species
+nFlow <- list()
+sFlow <- list()
+sapFlowNA <- list()
+for(i in 1:2){
+
+	sapFlowNA[[i]] <- na.omit(temp1[[i]])
+	nFlow[[i]] <- aggregate(sapFlowNA[[i]]$sapF,by=list(sapFlowNA[[i]]$hour,sapFlowNA[[i]]$doy,
+													year=sapFlowNA[[i]]$year,species=sapFlowNA[[i]]$species),
+							FUN="length")
+	colnames(nFlow[[i]]) <- c("hour","doy","year","species","count")
+	sFlow[[i]] <- aggregate(sapFlowNA[[i]]$sapF,by=list(sapFlowNA[[i]]$hour,sapFlowNA[[i]]$doy,
+													year=sapFlowNA[[i]]$year,species=sapFlowNA[[i]]$species),
+							FUN="mean")
+	colnames(sFlow[[i]]) <- c("hour","doy","year","species","sapF")
+	sFlow[[i]]$count <- nFlow[[i]]$count
+	sFlow[[i]][sFlow$count>=3,]
+}
+
+#filter for days where measurements aren't reliable
+for(i in 1:2){
+
+}
+
+
+specFlow <- sFlow
+
+
+		
+rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow")))
