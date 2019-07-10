@@ -32,7 +32,7 @@ plotcheck <- 0
 ##################################
 # packages                       #
 ##################################
-library(plyr)
+library(dplyr)
 library(lubridate)
 
 ##################################
@@ -55,7 +55,7 @@ datL$timeDD <- datL$doy+(datL$hour/24)
 
 
 #read in met data sensors for each site
-
+datP <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\airport\\airport.csv")
 
 ##################################
 # sap flow calculation           #
@@ -111,18 +111,22 @@ for(i in 1:2){
 	Kshapp[[i]] <- matrix(unlist(Kshapptemp),byrow=FALSE,ncol=16)
 }
 # need to take daily minimum
-Kshapptemp2 <- list()
-Kshapptemp3 <- list()
+Kshapptemp2 <- data.frame()
+Kshapptemp3 <- data.frame()
 Kshapptemp4 <- list()
 KshappM <- list()
 
 for(i in 1:2){
 	#omit negative ksh values
-	for(j in 1:16){
-	Kshapptemp2[[j]] <- data.frame(K=Kshapp[[i]][,j],Time[[i]],sensor=rep(j,length(Kshapp[[i]][j])))
-	Kshapptemp3[[j]] <- Kshapptemp2[[j]][Kshapptemp2[[j]]$K>0,]
+	
+	Kshapptemp2 <- data.frame(K=Kshapp[[i]][,1],Time[[i]],sensor=rep(1,length(Kshapp[[i]][1])))
+	for(j in 2:16){
+	Kshapptemp2 <- rbind(data.frame(K=Kshapp[[i]][,j],Time[[i]],sensor=rep(j,length(Kshapp[[i]][j]))))
+	
 	}
+	Kshapptemp3 <- Kshapptemp2[[j]][Kshapptemp2[[j]]$K>0,]
 	Kshapptemp4[[i]] <- ldply(Kshapptemp3,data.frame)
+
 	KshappM[[i]] <- aggregate(Kshapptemp4[[i]]$K, by=list(Kshapptemp4[[i]]$doy,Kshapptemp4[[i]]$sensor),FUN="min")
 	colnames(KshappM[[i]]) <- c("doy","sensor","K")
 	
@@ -137,7 +141,7 @@ for(i in 1:2){
 
 	for(j in 1:16){
 		
-		KshAppt1[[j]] <- join(Time[[i]],KshappM[[i]][KshappM[[i]]$sensor==j,],by="doy",type="left")
+		KshAppt1[[j]] <- left_join(Time[[i]],KshappM[[i]][KshappM[[i]]$sensor==j,],by="doy")
 		KshAppt2[[j]] <- KshAppt1[[j]]$K
 	}	
 		KshApp[[i]] <- matrix(unlist(KshAppt2),byrow=FALSE,ncol=16)
@@ -248,6 +252,8 @@ for(i in 1:2){
 }
 
 #filter for days where measurements aren't reliable
+#remove days that are on precip days
+
 for(i in 1:2){
 
 }
