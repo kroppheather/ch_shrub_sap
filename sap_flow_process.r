@@ -112,22 +112,20 @@ for(i in 1:2){
 }
 # need to take daily minimum
 Kshapptemp2 <- data.frame()
-Kshapptemp3 <- data.frame()
-Kshapptemp4 <- list()
+Kshapptemp3 <- list()
 KshappM <- list()
 
 for(i in 1:2){
 	#omit negative ksh values
-	
+
 	Kshapptemp2 <- data.frame(K=Kshapp[[i]][,1],Time[[i]],sensor=rep(1,length(Kshapp[[i]][1])))
 	for(j in 2:16){
-	Kshapptemp2 <- rbind(data.frame(K=Kshapp[[i]][,j],Time[[i]],sensor=rep(j,length(Kshapp[[i]][j]))))
+	Kshapptemp2 <- rbind(Kshapptemp2,data.frame(K=Kshapp[[i]][,j],Time[[i]],sensor=rep(j,length(Kshapp[[i]][j]))))
 	
 	}
-	Kshapptemp3 <- Kshapptemp2[[j]][Kshapptemp2[[j]]$K>0,]
-	Kshapptemp4[[i]] <- ldply(Kshapptemp3,data.frame)
+	Kshapptemp3[[i]] <- Kshapptemp2[Kshapptemp2$K>0,]
 
-	KshappM[[i]] <- aggregate(Kshapptemp4[[i]]$K, by=list(Kshapptemp4[[i]]$doy,Kshapptemp4[[i]]$sensor),FUN="min")
+	KshappM[[i]] <- aggregate(Kshapptemp3[[i]]$K, by=list(Kshapptemp3[[i]]$doy,Kshapptemp3[[i]]$sensor),FUN="min")
 	colnames(KshappM[[i]]) <- c("doy","sensor","K")
 	
 }
