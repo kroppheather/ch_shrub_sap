@@ -54,9 +54,6 @@ datG$timeDD <- datG$doy+(datG$hour/24)
 datL$timeDD <- datL$doy+(datL$hour/24)
 
 
-#read in met data sensors for each site
-datP <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\airport\\airport.csv")
-
 ##################################
 # sap flow calculation           #
 ##################################
@@ -227,12 +224,13 @@ for(i in 1:2){
 #join species info into the sensor
 temp1 <- list()
 for(i in 1:2){
-	temp1[[i]] <- join(sapFlow[[i]],specDF[[i]],by="sensor",type="left")
+	temp1[[i]] <- left_join(sapFlow[[i]],specDF[[i]],by="sensor")
 }
 
 #aggregate by species
 nFlow <- list()
 sFlow <- list()
+sdFlow <- list()
 sapFlowNA <- list()
 for(i in 1:2){
 
@@ -243,22 +241,42 @@ for(i in 1:2){
 	colnames(nFlow[[i]]) <- c("hour","doy","year","species","count")
 	sFlow[[i]] <- aggregate(sapFlowNA[[i]]$sapF,by=list(sapFlowNA[[i]]$hour,sapFlowNA[[i]]$doy,
 													year=sapFlowNA[[i]]$year,species=sapFlowNA[[i]]$species),
-							FUN="mean")
+							FUN="mean")					
 	colnames(sFlow[[i]]) <- c("hour","doy","year","species","sapF")
+	sdFlow[[i]] <- aggregate(sapFlowNA[[i]]$sapF,by=list(sapFlowNA[[i]]$hour,sapFlowNA[[i]]$doy,
+													year=sapFlowNA[[i]]$year,species=sapFlowNA[[i]]$species),
+							FUN="sd")
+	colnames(sdFlow[[i]]) <- c("hour","doy","year","species","SDsapF")						
+	sFlow[[i]]$SDsapF <- sdFlow[[i]]$SDsapF
 	sFlow[[i]]$count <- nFlow[[i]]$count
 	sFlow[[i]][sFlow$count>=3,]
+	
+	
 }
 
 #filter for days where measurements aren't reliable
-#remove days that are on precip days
-
+#remove days where the entire measurments are below zero
+#get count of measurements in a day
+#and remove days where it is only low flow measurements equal to zero
+dayNflow <- list()
+dayFlow <- list()
 for(i in 1:2){
-
+	dayNflow[[i]] <- aggregate(sFlow[[i]]$sapF,by=list( sFlow[[i]]$doy,sFlow[[i]]$year,sFlow[[i]]$species),
+								FUN="length")
+	colnames(dayNflow[[i]]) <- 	c("doy","year","species","nDay")						
+	dayFlow[[i]] <- aggregate(sFlow[[i]]$sapF,by=list( sFlow[[i]]$doy,sFlow[[i]]$year,sFlow[[i]]$species),
+								FUN="mean")	
+	colnames(dayFlow[[i]]) <- 	c("doy","year","species","sapDay")
+	dayFlow[[i]]$nDay <- dayNflow[[i]]$nDay
+	#generate a list of days to keep at least half a day of measurement
+	#and no all zero day
+	dayFlow[[i]] <- dayFlow[[i]][dayFlow[[i]]$nDay>=28&dayFlow[[i]]$sapDay>0,]
+	
 }
-
-
-specFlow <- sFlow
-
-
+#join back into sFlow
+specFlow <- list()
+for(i in 1:2){
+	specFlow[[i]] <- inner_join(sFlow[[i]],dayFlow[[i]], by=c("species","doy","year"))
+}
 		
 rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow")))
