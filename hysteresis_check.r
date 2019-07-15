@@ -39,7 +39,7 @@ datG <- read.csv("z:\\data_repo\\field_data\\viperData\\German_met.csv")
 
 
 #join RH and TC
-datM <- join(datRH, datTC, by=c("doy","year","hour","site"), type="inner")
+datM <- inner_join(datRH, datTC, by=c("doy","year","hour","site"))
 datL <- datM[datM$site=="ld"&datM$year==2016,]
 datLR <- data.frame(doy=datL$doy,year=datL$year,hour=datL$hour,RH=datL$RH*100,temp=datL$TempC.VP4)
 
@@ -68,8 +68,8 @@ met <- list(datG,datLR)
 
 
 for(i in 1:2){
-	sapFlow[[i]] <- join(sapFlow[[i]],met[[i]], by=c("doy","hour"), type="left")
-	specFlow[[i]] <- join(specFlow[[i]],met[[i]], by=c("doy","hour"), type="left")
+	sapFlow[[i]] <- left_join(sapFlow[[i]],met[[i]], by=c("doy","hour"))
+	specFlow[[i]] <- left_join(specFlow[[i]],met[[i]], by=c("doy","hour"))
 
 }
 
@@ -89,16 +89,16 @@ for(i in 1:2){
 	days[[i]] <- unique(data.frame(doy=sapFlow[[i]]$doy))
 	maxD[[i]] <- aggregate(sapFlow[[i]]$D,by=list(sapFlow[[i]]$doy),FUN="max",na.rm=TRUE)
 	colnames(maxD[[i]]) <- c("doy","maxD")
-	days[[i]] <- join(days[[i]],maxD[[i]], by="doy",type="left")
+	days[[i]] <- left_join(days[[i]],maxD[[i]], by="doy")
 	minD[[i]] <- aggregate(sapFlow[[i]]$D,by=list(sapFlow[[i]]$doy),FUN="min",na.rm=TRUE)
 	colnames(minD[[i]]) <- c("doy","minD")
-	days[[i]] <- join(days[[i]],minD[[i]], by="doy",type="left")
+	days[[i]] <- left_join(days[[i]],minD[[i]], by="doy")
 	maxS[[i]] <- aggregate(sapFlow[[i]]$sapF,by=list(sapFlow[[i]]$doy),FUN="max",na.rm=TRUE)
 	colnames(maxS[[i]]) <- c("doy","maxS")
-	days[[i]] <- join(days[[i]],maxS[[i]], by="doy",type="left")
+	days[[i]] <- left_join(days[[i]],maxS[[i]], by="doy")
 	minS[[i]] <- aggregate(sapFlow[[i]]$sapF,by=list(sapFlow[[i]]$doy),FUN="min",na.rm=TRUE)
 	colnames(minS[[i]]) <- c("doy","minS")
-	days[[i]] <- join(days[[i]],minS[[i]], by="doy",type="left")
+	days[[i]] <- left_join(days[[i]],minS[[i]], by="doy")
 	days[[i]] <- days[[i]][days[[i]]$minD!=Inf,]
 }
 
@@ -146,9 +146,10 @@ for(i in 1:2){
 days2 <- list()
 for(i in 1:2){
 	days2[[i]] <- unique(data.frame(doy=specFlow[[i]]$doy))
-}
-days2[[2]] <- days2[[2]][days2[[2]]$doy>183,]
+	
 
+}
+days2[[2]] <- data.frame(doy=days2[[i]]$doy[days2[[i]]$doy>183])
 cols <- c("tomato3","cornflowerblue")
 #get unique species data frame
 specName <- list()

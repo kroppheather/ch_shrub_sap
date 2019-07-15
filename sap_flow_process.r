@@ -214,7 +214,9 @@ for(i in 1:2){
 							
 
 }
-
+##################################
+# aggregate by species           #
+##################################
 #aggregate sap flow across species
 specDF <- list()
 for(i in 1:2){
@@ -279,4 +281,72 @@ for(i in 1:2){
 	specFlow[[i]] <- inner_join(sFlow[[i]],dayFlow[[i]], by=c("species","doy","year"))
 }
 		
-rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow")))
+		
+##################################
+# calculate daily transpiration  #
+##################################		
+#calculate average daily T
+
+#get the daily observation count by sensor
+nFlowSens <- list()
+nFlowSensA <- list()
+for(i in 1:2){
+
+	nFlowSens[[i]] <- aggregate(sapFlowNA[[i]]$sapF,by=list(doy=sapFlowNA[[i]]$doy,
+													year=sapFlowNA[[i]]$year,sensor=sapFlowNA[[i]]$sensor
+													,species=sapFlowNA[[i]]$species),
+							FUN="length")
+	nFlowSensA[[i]] <- nFlowSens[[i]][nFlowSens[[i]]$x==48,]						
+
+}
+
+#subset  sapflow
+sensSF <- list()
+
+for(i in 1:2){
+	sensSF[[i]] <- inner_join(sapFlowNA[[i]],nFlowSensA[[i]], by=c("doy","year","sensor","species"))
+}
+
+#convert to total g m-2 per half hour
+for(i in 1:2){
+	sensSF[[i]]$sapHH <- sensSF[[i]]$sapF*(60*30)
+}
+
+#now sum up total daily transpiration
+dailyT <- list()
+for(i in 1:2){
+	dailyT[[i]] <- aggregate(sensSF[[i]]$sapHH, by=list(doy=sensSF[[i]]$doy,
+														year=sensSF[[i]]$year,
+														sensor=sensSF[[i]]$sensor,
+														species=sensSF[[i]]$species),FUN="sum")
+	#remove daily flow where all t was low flow
+	dailyT[[i]] <- dailyT[[i]][dailyT[[i]]$x>0,]
+}
+#aggregate by species
+specT <- list()
+nspecT <- list()
+SDspecT <- list()
+for(i in 1:2){
+	specT[[i]] <- aggregate(dailyT[[i]]$x, by=list(dailyT[[i]]$doy,dailyT[[i]]$year,dailyT[[i]]$species),
+											FUN="mean")
+	colnames(specT[[i]]) <- c("doy","year","species","T.g.m2.day")	
+	nspecT[[i]] <-	aggregate(dailyT[[i]]$x, by=list(doy=dailyT[[i]]$doy,
+														year=dailyT[[i]]$year,
+														species=dailyT[[i]]$species),
+											FUN="length")									
+	specT[[i]]$nT <- nspecT[[i]]$x
+	SDspecT[[i]] <-	aggregate(dailyT[[i]]$x, by=list(doy=dailyT[[i]]$doy,
+														year=dailyT[[i]]$year,
+														species=dailyT[[i]]$species),
+											FUN="sd")
+	specT[[i]]$sdT <- SDspecT[[i]]$x	
+	specT[[i]] <- specT[[i]][specT[[i]]$nT>=3,]
+	#convert grams to L
+	specT[[i]]$L.m2.day <- specT[[i]]$T.g.m2.day /1000
+	specT[[i]]$L.m2.daySD <- specT[[i]]$sdT /1000
+}
+
+plot(specT[[1]]$doy,specT[[1]]$L.m2.day, col=specT[[1]]$species,pch=19)
+
+		
+rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specT")))
