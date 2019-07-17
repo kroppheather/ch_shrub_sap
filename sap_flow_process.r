@@ -8,9 +8,19 @@
 ######################## in a floodplain (german site)     ########################
 ######################## and a low density upland forest   ########################
 ###################################################################################
+######################## R version 3.4.3                   ######################## 
+###################################################################################
 ######################## outputs:                          ########################
 ######################## sensor (list) sensor info         ########################
 ######################## sapFlow (list) sapflow g m-2 s-1  ########################
+######################## specFlow (list) species averaged  ########################
+########################     sapflow g m-2 s-1             ########################
+######################## specTday (list) species averaged  ########################
+########################     total daily transpiration     ########################
+########################     L m-2 s-1                     ########################
+######################## gcSpec (list) species averaged    ########################
+########################     stomatal conductance          ########################
+########################     mol m-2 s-1                   ########################
 ###################################################################################
 
 
@@ -59,7 +69,7 @@ datL$timeDD <- datL$doy+(datL$hour/24)
 datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
 datTC <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\TempC.VP4.csv")
 metG <- read.csv("z:\\data_repo\\field_data\\viperData\\German_met.csv")
-
+datAir <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\airport\\airport.csv")
 ###################################################################################
 ###################################################################################
 ######## Part 1: calculate sap flow from data logger data                  ########    
@@ -379,7 +389,7 @@ for(i in 1:2){
 #join RH and TC
 datM <- inner_join(datRH, datTC, by=c("doy","year","hour","site"))
 datLt <- datM[datM$site=="ld"&datM$year==2016,]
-datLR <- data.frame(doy=datLt$doy,year=datLt$year,hour=datL$hour,RH=datLt$RH*100,temp=datLt$TempC.VP4)
+datLR <- data.frame(doy=datLt$doy,year=datLt$year,hour=datLt$hour,RH=datLt$RH*100,temp=datLt$TempC.VP4)
 
 
 #date and time for G
@@ -400,9 +410,11 @@ metG$RHf <- ifelse(metG$RH>99.9,99.9,metG$RH)
 datLR$D <- datLR$e.sat-((datLR$RHf/100)*datLR$e.sat)
 metG$D <- metG$e.sat-((metG$RHf/100)*metG$e.sat)
 
-#join light into met. Using low density for both sites
-datLR <- left_join(datLR,datQ, by=c("doy","hour","year"))
-metG <- left_join(metG,datQ, by=c("doy","hour","year"))
+
+datLR <- left_join(datLR,datAir, by=c("doy","year"))
+metG <- left_join(metG,datAir, by=c("doy","year"))
+
+
 met <- list(metG,datLR)
 
 ##################################
@@ -415,5 +427,72 @@ for(i in 1:2){
 }
 
 #join in canopy met data
+for(i in 1:2){
+	sapFlowNA[[i]] <- left_join(sapFlowNA[[i]],met[[i]],by=c("doy","hour","year"))
+}
+
+#calculate Kg coefficient from Montieth and Unsworth
+Kg.coeff<-function(T){115.8+(.423*T)}
+
+
+for(i in 1:2){
+	sapFlowNA[[i]]$Kg.coff <- Kg.coeff(sapFlowNA[[i]]$temp)
+}
+
+#convert to gs
+Gs.convert1<-function(Kg,El,D,P){((Kg*El)/D)*P}
+
+for(i in 1:2){
+	sapFlowNA[[i]]$gcalc <- Gs.convert1(sapFlowNA[[i]]$Kg.coff,
+									sapFlowNA[[i]]$sapFkg,
+									sapFlowNA[[i]]$D,
+									sapFlowNA[[i]]$Pkpa.gap)
+}
+
+#change units to moles
+unit.conv<-function(gs,T,P){gs*.446*(273/(T+273))*(P/101.3)}
+
+for(i in 1:2){
+	sapFlowNA[[i]]$gcm <- unit.conv(sapFlowNA[[i]]$gcalc,sapFlowNA[[i]]$temp,sapFlowNA[[i]]$Pkpa.gap)
+}
+
+#subset so that only taking gc during reliable times
+#when its not raining and error in gc assumption is minimal due to higher vpd
+gcSub <- list()
+for(i in 1:2){
+	gcSub[[i]] <- data.frame(sapFlowNA[[i]][,1:3],D=sapFlowNA[[i]]$D,Pr.mm=sapFlowNA[[i]]$Pr.mm,
+								gcm=sapFlowNA[[i]]$gcm,species=sapFlowNA[[i]]$species)
+									
+	gcSub[[i]] <- na.omit(gcSub[[i]][gcSub[[i]]$D >= 0.6 & gcSub[[i]]$Pr.mm < 1,])
+}
+#calculate the average gc for species
+gcSpec <- list()
+gcSpecSD <- list()
+gcSpecN <- list()
+for(i in 1:2){
+	gcSpec[[i]] <- aggregate(gcSub[[i]]$gcm, 
+								by=list(gcSub[[i]]$hour,
+										gcSub[[i]]$doy,
+										gcSub[[i]]$year,
+										gcSub[[i]]$species),
+								FUN="mean")
+	colnames(gcSpec[[i]]) <- c("hour","doy","year","species","gc.mol.m2.s")
+	gcSpecSD[[i]] <- aggregate(gcSub[[i]]$gcm, 
+								by=list(gcSub[[i]]$hour,
+										gcSub[[i]]$doy,
+										gcSub[[i]]$year,
+										gcSub[[i]]$species),
+								FUN="sd")
+	gcSpecN[[i]] <- aggregate(gcSub[[i]]$gcm, 
+								by=list(gcSub[[i]]$hour,
+										gcSub[[i]]$doy,
+										gcSub[[i]]$year,
+										gcSub[[i]]$species),
+								FUN="length")
+	gcSpec[[i]]$gcSD <- gcSpecSD[[i]]$x
+	gcSpec[[i]]$gcN <- gcSpecN[[i]]$x
+	#remove cases where the average is calculated with less than 3
+	gcSpec[[i]] <- gcSpec[[i]][gcSpec[[i]]$gcN>=3,]
+}
 		
-rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specTday")))
+rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specTday","gcSpec")))
