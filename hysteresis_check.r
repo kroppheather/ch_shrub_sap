@@ -36,7 +36,11 @@ library(RColorBrewer)
 datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
 datTC <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\TempC.VP4.csv")
 datG <- read.csv("z:\\data_repo\\field_data\\viperData\\German_met.csv")
+datQa <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\PAR.QSOS Par.csv")
+datQa <- datQa[datQa$site=="ld",]
 
+#take only revlant info for par and rename to simplier
+datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 
 #join RH and TC
 datM <- inner_join(datRH, datTC, by=c("doy","year","hour","site"))
@@ -62,7 +66,9 @@ datG$RHf <- ifelse(datG$RH>99.9,99.9,datG$RH)
 datLR$D <- datLR$e.sat-((datLR$RHf/100)*datLR$e.sat)
 datG$D <- datG$e.sat-((datG$RHf/100)*datG$e.sat)
 
-
+#join light into met. Using low density for both sites
+datLR <- left_join(datLR,datQ, by=c("doy","hour","year"))
+datG <- left_join(datG,datQ, by=c("doy","hour","year"))
 met <- list(datG,datLR)
 #join into sapflow tables
 
@@ -146,11 +152,38 @@ for(i in 1:2){
 days2 <- list()
 for(i in 1:2){
 	days2[[i]] <- unique(data.frame(doy=specFlow[[i]]$doy))
+
 	
 
 }
 days2[[2]] <- data.frame(doy=days2[[i]]$doy[days2[[i]]$doy>183])
-cols <- c("tomato3","cornflowerblue")
+cols <- c("tomato3","cornflowerblue")	
+
+#get the maximum sap flow and light for plotting
+maxQ <- list()
+maxS <- list()
+maxD <- list()
+for(i in 1:2){
+	maxQ[[i]] <- aggregate(specFlow[[i]]$PAR, by=list(specFlow[[i]]$doy),FUN="max",na.rm=TRUE)
+	colnames(maxQ[[i]]) <- c("doy","PARmax")
+	maxS[[i]] <- aggregate(specFlow[[i]]$sapF, by=list(specFlow[[i]]$doy),FUN="max",na.rm=TRUE)
+	colnames(maxS[[i]]) <- c("doy","Sapmax")
+	maxD[[i]] <- aggregate(specFlow[[i]]$D, by=list(specFlow[[i]]$doy),FUN="max",na.rm=TRUE)
+	colnames(maxD[[i]]) <- c("doy","Dmax")
+}	
+
+#join backinto days 2
+for(i in 1:2){
+	days2[[i]] <- left_join(days2[[i]],maxQ[[i]],by="doy")
+	days2[[i]] <- left_join(days2[[i]],maxS[[i]],by="doy")
+	days2[[i]] <- left_join(days2[[i]],maxD[[i]],by="doy")
+	days2[[i]]$Sp <- days2[[i]]$Sapmax+0.05
+	days2[[i]]$Pp <- days2[[i]]$PARmax+50
+	days2[[i]]$scaleF <- days2[[i]]$Sp/days2[[i]]$Pp
+	days2[[i]]$Dp <- days2[[i]]$Dmax+0.25
+	days2[[i]]$scaleD <- days2[[i]]$Sp/days2[[i]]$Dp
+}
+
 #get unique species data frame
 specName <- list()
 for(i in 1:2){
@@ -189,3 +222,52 @@ for(i in 1:2){
 	dev.off()	
 	}	
 }
+
+
+#look at species average
+for(i in 1:2){
+	for(k in 1:dim(days2[[i]])[1]){
+	png(paste0(plotDI,"\\species\\PAR\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"))
+		plot(specFlow[[i]]$PAR[specFlow[[i]]$doy==days2[[i]]$doy[k]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]], 
+			type="n",
+			xlab="PAR",ylab="sapflow")
+		for(j in 1:2){
+			points(specFlow[[i]]$PAR[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			pch=19,col=cols[j],type="b")
+		}
+	dev.off()	
+	}	
+}
+
+#look at species average by hour and with light on the same plot
+
+for(i in 1:2){
+	for(k in 1:dim(days2[[i]])[1]){
+	png(paste0(plotDI,"\\species\\day\\",nameS[[i]],"_doy",days[[i]]$doy[k],".png"), width = 600, height = 600,)
+	par(mai=c(1,1,1,1))
+		plot(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]], 
+			type="n",
+			xlab="hour",ylab="sapflow", ylim=c(0,days2[[i]]$Sp[k]),lwd=2,cex=2,
+			main=paste(nameS[i],days2[[i]]$doy[k]))
+		for(j in 1:2){
+			points(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$sapF[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			pch=19,col=cols[j],type="b",lwd=2,cex=2)
+			points(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$PAR[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]]*days2[[i]]$scaleF[k],
+			pch=17,col="mediumpurple",type="b", lty=3,lwd=2,cex=2)
+			points(specFlow[[i]]$hour[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]],
+			specFlow[[i]]$D[specFlow[[i]]$doy==days2[[i]]$doy[k]&specFlow[[i]]$species==specName[[i]]$species[j]]*days2[[i]]$scaleD[k],
+			pch=18,col="palegreen3",type="b", lty=3,lwd=2,cex=2)
+		}
+		legend("topleft",c(as.character(specName[[i]]$species),"D","PAR"),col=c(cols,"palegreen3","mediumpurple"),
+					pch=c(19,19,18,17),lty=c(1,1,3,3),lwd=2,cex=1.5,bty="n")
+		axis(4, seq(0,days2[[i]]$Sp[k],length.out=5),round(seq(0,days2[[i]]$Pp[k],length.out=5)),col.axis="mediumpurple")
+		mtext(round(seq(0,days2[[i]]$Dp[k],length.out=5),2), at=seq(0,days2[[i]]$Sp[k],length.out=5),side=4,line=2,col="palegreen3")
+	dev.off()	
+	}	
+}
+

@@ -346,7 +346,5 @@ for(i in 1:2){
 	specT[[i]]$L.m2.daySD <- specT[[i]]$sdT /1000
 }
 
-plot(specT[[1]]$doy,specT[[1]]$L.m2.day, col=specT[[1]]$species,pch=19)
-
 		
 rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specT")))
