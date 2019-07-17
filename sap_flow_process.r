@@ -53,6 +53,18 @@ lLA <- read.csv("z:\\data_repo\\field_data\\viperData\\sapflow\\LD_la.csv")
 datG$timeDD <- datG$doy+(datG$hour/24)
 datL$timeDD <- datL$doy+(datL$hour/24)
 
+#read in met data for gs calculations
+
+#read in met data
+datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
+datTC <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\TempC.VP4.csv")
+metG <- read.csv("z:\\data_repo\\field_data\\viperData\\German_met.csv")
+
+###################################################################################
+###################################################################################
+######## Part 1: calculate sap flow from data logger data                  ########    
+###################################################################################
+###################################################################################
 
 ##################################
 # sap flow calculation           #
@@ -214,6 +226,13 @@ for(i in 1:2){
 							
 
 }
+
+###################################################################################
+###################################################################################
+######## Part 2: calculate half hourly and daily transpiration by species  ########   
+###################################################################################
+###################################################################################	
+
 ##################################
 # aggregate by species           #
 ##################################
@@ -280,7 +299,7 @@ specFlow <- list()
 for(i in 1:2){
 	specFlow[[i]] <- inner_join(sFlow[[i]],dayFlow[[i]], by=c("species","doy","year"))
 }
-		
+	
 		
 ##################################
 # calculate daily transpiration  #
@@ -323,28 +342,78 @@ for(i in 1:2){
 	dailyT[[i]] <- dailyT[[i]][dailyT[[i]]$x>0,]
 }
 #aggregate by species
-specT <- list()
+specTday <- list()
 nspecT <- list()
 SDspecT <- list()
 for(i in 1:2){
-	specT[[i]] <- aggregate(dailyT[[i]]$x, by=list(dailyT[[i]]$doy,dailyT[[i]]$year,dailyT[[i]]$species),
+	specTday[[i]] <- aggregate(dailyT[[i]]$x, by=list(dailyT[[i]]$doy,dailyT[[i]]$year,dailyT[[i]]$species),
 											FUN="mean")
-	colnames(specT[[i]]) <- c("doy","year","species","T.g.m2.day")	
+	colnames(specTday[[i]]) <- c("doy","year","species","T.g.m2.day")	
 	nspecT[[i]] <-	aggregate(dailyT[[i]]$x, by=list(doy=dailyT[[i]]$doy,
 														year=dailyT[[i]]$year,
 														species=dailyT[[i]]$species),
 											FUN="length")									
-	specT[[i]]$nT <- nspecT[[i]]$x
+	specTday[[i]]$nT <- nspecT[[i]]$x
 	SDspecT[[i]] <-	aggregate(dailyT[[i]]$x, by=list(doy=dailyT[[i]]$doy,
 														year=dailyT[[i]]$year,
 														species=dailyT[[i]]$species),
 											FUN="sd")
-	specT[[i]]$sdT <- SDspecT[[i]]$x	
-	specT[[i]] <- specT[[i]][specT[[i]]$nT>=3,]
+	specTday[[i]]$sdT <- SDspecT[[i]]$x	
+	specTday[[i]] <- specTday[[i]][specTday[[i]]$nT>=3,]
 	#convert grams to L
-	specT[[i]]$L.m2.day <- specT[[i]]$T.g.m2.day /1000
-	specT[[i]]$L.m2.daySD <- specT[[i]]$sdT /1000
+	specTday[[i]]$L.m2.day <- specTday[[i]]$T.g.m2.day /1000
+	specTday[[i]]$L.m2.daySD <- specTday[[i]]$sdT /1000
 }
 
+
+###################################################################################
+###################################################################################
+######## Part 3: calculate stomatal conductance by species                 ########   
+###################################################################################
+###################################################################################	
+
+##################################
+# organize met data for stomatal #
+# conductance calculations       #
+##################################	
+#join RH and TC
+datM <- inner_join(datRH, datTC, by=c("doy","year","hour","site"))
+datLt <- datM[datM$site=="ld"&datM$year==2016,]
+datLR <- data.frame(doy=datLt$doy,year=datLt$year,hour=datL$hour,RH=datLt$RH*100,temp=datLt$TempC.VP4)
+
+
+#date and time for G
+dateG <- as.Date(metG$Date.Time, "%d.%m.%Y %H:%M")
+metG$doy <- yday(dateG)
+metG$year <- year(dateG)
+metG$hour <- as.numeric(substr(metG$Date.Time,12,13))+(as.numeric(substr(metG$Date.Time,15,16))/60)
+
+#calculate vpd for each site
+#saturated water vapor
+datLR$e.sat <- 0.611*exp((17.502*datLR$temp)/(datLR$temp+240.97))
+metG$e.sat <- 0.611*exp((17.502*metG$temp)/(metG$temp+240.97))
+
+#fix any RH greater than 100
+datLR$RHf <- ifelse(datLR$RH>99.9,99.9,datLR$RH)
+metG$RHf <- ifelse(metG$RH>99.9,99.9,metG$RH)
+#calculate vapor pressure deficit
+datLR$D <- datLR$e.sat-((datLR$RHf/100)*datLR$e.sat)
+metG$D <- metG$e.sat-((metG$RHf/100)*metG$e.sat)
+
+#join light into met. Using low density for both sites
+datLR <- left_join(datLR,datQ, by=c("doy","hour","year"))
+metG <- left_join(metG,datQ, by=c("doy","hour","year"))
+met <- list(metG,datLR)
+
+##################################
+# calculate stomatal conductance #
+##################################		
+#convert transpiration to kg m-2 -s
+#note
+for(i in 1:2){
+	sapFlowNA[[i]]$sapFkg <- sapFlowNA[[i]]$sapF/1000
+}
+
+#join in canopy met data
 		
-rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specT")))
+rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specTday")))
