@@ -94,10 +94,10 @@ for(i in 1:2){
 #turn into a data frame
 metDF <- rbind(cbind(D=met2[[1]]$D,met2[[1]][,3:13]),met2[[2]])
 
-
 #join in PAR data
 metDF <- left_join(metDF,datQ, by=c("doy","year","hour"))
 
+metDF <- metDF[metDF$year == 2016,]
 
 ##################################
 # organize data                  #
@@ -124,7 +124,7 @@ daysAll <- daysAll[daysAll$nGc>=5,]
 gcDays <- inner_join(gcAll,daysAll,by=c("doy","year","species","siteid"))
 
 #join met to gcDays
-gcDays <- left_join(gcDays, metDF, by=c("doy","year","siteid"))
+gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 
 #get a dataframe of just site days
 
@@ -132,15 +132,56 @@ siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
 ##################################
 # plots                          #
 ##################################
+
+### VPD  ####
 #make a plot of daily gc vs D
 namesi <- c("floodplain","upland")
 #factor order: 1=alnus,2=salix, 3=betula
 specCol <- c("forestgreen","mediumpurple","cornflowerblue")
 
 for(i in 1:dim(siteDays)[1]){
-	png(paste0(plotDir,"\\gc\\dayD\\",namesi[siteDays$siteid[i]],"_","doy_",siteDays$doy[i],".png"))
-		plot(gcDays$D[gcDays$doy == siteDays$doy & gcDays$siteid == gcDays$siteid],
-			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy & gcDays$siteid == gcDays$siteid],type="n",
-			
+	png(paste0(plotDir,"\\gc\\dayPAR\\",namesi[siteDays$siteid[i]],"_","doy_",siteDays$doy[i],".png"))
+		plot(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],type="n",
+			xlab= " vapor pressure deficit (kpa)", ylab="stomatal conductance (mol m-2 s-1)")
+		if(siteDays$siteid[i] == 1){
+				points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid ==siteDays$siteid[i] & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Alnus"], 
+			pch=19, col=specCol[1])
+		}
+		points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"], 
+			pch=19, col=specCol[2])		
+		if(siteDays$siteid[i] == 2){	
+		points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"], 
+			pch=19, col=specCol[3])		
+		}	
+	dev.off()
+
+}
+
+### PAR  ####
+
+
+for(i in 1:dim(siteDays)[1]){
+	png(paste0(plotDir,"\\gc\\dayPAR\\",namesi[siteDays$siteid[i]],"_","doy_",siteDays$doy[i],".png"))
+		plot(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],type="n",
+			xlab= " vapor pressure deficit (kpa)", ylab="stomatal conductance (mol m-2 s-1)")
+		if(siteDays$siteid[i] == 1){
+				points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid ==siteDays$siteid[i] & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Alnus"], 
+			pch=19, col=specCol[1])
+		}
+		points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"], 
+			pch=19, col=specCol[2])		
+		if(siteDays$siteid[i] == 2){	
+		points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"], 
+			pch=19, col=specCol[3])		
+		}	
+	dev.off()
 
 }
