@@ -129,8 +129,116 @@ gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 #get a dataframe of just site days
 
 siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
+##################################
+# plots                          #
+##################################
+
+### VPD  ####
+#make a plot of daily gc vs D
+namesi <- c("floodplain","upland")
+#factor order: 1=alnus,2=salix, 3=betula
+specCol <- c("forestgreen","mediumpurple","cornflowerblue")
+
+for(i in 1:dim(siteDays)[1]){
+	png(paste0(plotDir,"\\gc\\dayPAR\\",namesi[siteDays$siteid[i]],"_","doy_",siteDays$doy[i],".png"))
+		plot(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],type="n",
+			xlab= " vapor pressure deficit (kpa)", ylab="stomatal conductance (mol m-2 s-1)")
+		if(siteDays$siteid[i] == 1){
+				points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid ==siteDays$siteid[i] & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Alnus"], 
+			pch=19, col=specCol[1])
+		}
+		points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"], 
+			pch=19, col=specCol[2])		
+		if(siteDays$siteid[i] == 2){	
+		points(gcDays$D[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"], 
+			pch=19, col=specCol[3])		
+		}	
+	dev.off()
+
+}
+
+### PAR  ####
 
 
-##################################
-# calculate transpiration        #
-##################################
+for(i in 1:dim(siteDays)[1]){
+	png(paste0(plotDir,"\\gc\\dayPAR\\",namesi[siteDays$siteid[i]],"_","doy_",siteDays$doy[i],".png"))
+		plot(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i]],type="n",
+			xlab= " vapor pressure deficit (kpa)", ylab="stomatal conductance (mol m-2 s-1)")
+		if(siteDays$siteid[i] == 1){
+				points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid ==siteDays$siteid[i] & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Alnus"], 
+			pch=19, col=specCol[1])
+		}
+		points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Salix"], 
+			pch=19, col=specCol[2])		
+		if(siteDays$siteid[i] == 2){	
+		points(gcDays$PAR[gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s  [gcDays$doy == siteDays$doy[i] & gcDays$siteid == siteDays$siteid[i] & gcDays$species == "Betula"], 
+			pch=19, col=specCol[3])		
+		}	
+	dev.off()
+
+}
+
+
+### VPD  ####
+### all  ####
+png(paste0(plotDir,"\\gc\\all_D.png"))
+	plot(gcDays$D,gcDays$gc.mol.m2.s,type="n",xlab=" D (kPa)", ylab="gc (mol m-2 s-1)")
+	points(gcDays$D[gcDays$siteid == 1 & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 1 & gcDays$species == "Alnus"],
+			col="mistyrose3",pch=19)
+	points(gcDays$D[gcDays$siteid == 1 & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 1 & gcDays$species == "Salix"],
+			col="steelblue4",pch=19)		
+			
+	points(gcDays$D[gcDays$siteid == 2 & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 2 & gcDays$species == "Salix"],
+			col="darkseagreen4",pch=19)			
+				
+	points(gcDays$D[gcDays$siteid == 2 & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 2 & gcDays$species == "Betula"],
+			col="darkgoldenrod",pch=19)		
+	legend("topright", c("floodplain Alnus", "floodplain Salix", "upland Salix", "upland Betala"),
+			pch=19, col=c("mistyrose3","steelblue4","darkseagreen4","darkgoldenrod"),bty="n")
+dev.off()		
+
+
+### PAR  ####
+### all  ####
+png(paste0(plotDir,"\\gc\\all_PAR.png"))
+	plot(gcDays$PAR,gcDays$gc.mol.m2.s,type="n",xlab=" D (kPa)", ylab="gc (mol m-2 s-1)")
+	points(gcDays$PAR[gcDays$siteid == 1 & gcDays$species == "Alnus"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 1 & gcDays$species == "Alnus"],
+			col="mistyrose3",pch=19)
+	points(gcDays$PAR[gcDays$siteid == 1 & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 1 & gcDays$species == "Salix"],
+			col="steelblue4",pch=19)		
+			
+	points(gcDays$PAR[gcDays$siteid == 2 & gcDays$species == "Salix"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 2 & gcDays$species == "Salix"],
+			col="darkseagreen4",pch=19)			
+				
+	points(gcDays$PAR[gcDays$siteid == 2 & gcDays$species == "Betula"],
+			gcDays$gc.mol.m2.s[gcDays$siteid == 2 & gcDays$species == "Betula"],
+			col="darkgoldenrod",pch=19)		
+	legend("topright", c("floodplain Alnus", "floodplain Salix", "upland Salix", "upland Betala"),
+			pch=19, col=c("mistyrose3","steelblue4","darkseagreen4","darkgoldenrod"),bty="n")
+dev.off()
+
+for(i in 1:2){
+	specTday[[i]]$siteid <- rep(i,dim(specTday[[i]])[1])
+}
+
+Tday <- rbind(specTday[[1]],specTday[[2]])
+
+Tmeans <- aggregate(Tday$L.m2.day, by=list(Tday$siteid,Tday$species), FUN="mean")
+col(Tmeans) <- c("siteid","species","T")		
+Tsd <- aggregate(Tday$L.m2.day, by=list(Tday$siteid,Tday$species), FUN="sd")
+Tmeans$Tsd <- Tsd$x
