@@ -130,4 +130,7 @@ gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 
 siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
 
-
+gcDays$spsID <- ifelse(gcDays$siteid==1&gcDays$species == "Alnus",1,
+				ifelse(gcDays$siteid==1&gcDays$species == "Salix",2,
+				ifelse(gcDays$siteid==2&gcDays$species == "Betula",3,
+				ifelse(gcDays$siteid==2&gcDays$species == "Salix",4,NA))))
