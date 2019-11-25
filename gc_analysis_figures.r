@@ -43,7 +43,7 @@ datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 ##################################
 # set up directories             #
 ##################################
-plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots"
+plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots\\poster"
 
 
 ##################################
@@ -129,6 +129,17 @@ gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 #get a dataframe of just site days
 
 siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
+#combine transpiration from list
+#1=floodplain, 2= upland
+for(i in 1:2){
+	specTday[[i]]$siteid <- rep(i, dim(specTday[[i]])[1])
+}
+tdayDF <- rbind(specTday[[1]],specTday[[2]])
+#create site species id for graphing
+tdayDF$spsID <- ifelse(tdayDF$siteid==1&tdayDF$species == "Alnus",1,
+				ifelse(tdayDF$siteid==1&tdayDF$species == "Salix",2,
+				ifelse(tdayDF$siteid==2&tdayDF$species == "Betula",3,
+				ifelse(tdayDF$siteid==2&tdayDF$species == "Salix",4,NA))))
 ##################################
 # plots                          #
 ##################################
@@ -136,3 +147,31 @@ siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
 #################################################################
 ################## Daily Transpiration   ########################
 #################################################################
+
+coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
+			rgb(213,94,0, maxColorValue = 255), #salix floodplain
+			rgb(0,158,115, maxColorValue = 255), #betula upland
+			rgb(230,159,0, maxColorValue = 255)) #salix upland
+
+wd <- 15
+hd <- 15
+xl <- 180
+xh <- 240
+yl <- 0
+yh <- 5
+
+
+png(paste0(plotDir,"\\Tday.png"), width = 17, height = 17, units = "cm", res=300)
+	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+		xlab= " ", ylab=" ", axes=FALSE)
+	for(i in 1:4){	
+		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
+			type="b")
+		arrows(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]-tdayDF$L.m2.daySD[tdayDF$spsID==i],
+		tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]+tdayDF$L.m2.daySD[tdayDF$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5))
+	}
+		
+		
+dev.off()	
+	
