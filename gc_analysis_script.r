@@ -131,6 +131,3 @@ gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
 
 
-##################################
-# calculate transpiration        #
-##################################
