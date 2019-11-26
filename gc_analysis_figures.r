@@ -50,22 +50,32 @@ plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots\\poster"
 ##################################
 # read in allometry data         #
 ##################################	
-alloU <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\2012 - 2017 Density Gradient Shrubs.csv")
-alloF <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\flood_allom.csv")
-alloU <- 
 
+alloF <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\flood_allom.csv")
+
+#only look at whole plant allometry 
+alloF <- alloF[alloF$type == "plant",]
+
+
+##################################
+# Vegetation colors for plotting #
+##################################
+
+coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
+			rgb(213,94,0, maxColorValue = 255), #salix floodplain
+			rgb(0,158,115, maxColorValue = 255), #betula upland
+			rgb(230,159,0, maxColorValue = 255)) #salix upland
 
 ##################################
 # organize allometry data        #
 ##################################	
 #pull out only low density sites
 #all site ids start with L for low density
-upAllo <- alloU[substr(alloU$Site,1,1) == "L",]
-#only look at whole plant allometry for floodplain
-flAllo <- alloF[alloF$type == "plant",]
+
+
 flAllo <- alloF[alloF$site == "y4" | alloF$site == "amb",] 
 
-
+upAllo <- alloF[alloF$site == "exp" | alloF$site == "ldf",] 
 ##################################
 # organize met data              #
 ##################################	
@@ -209,14 +219,33 @@ flSLA$species <- c("sal","aln")
 
 #not recognizing names as different even though they are exactly the same...
 upSLA <- 	unique(data.frame(Species=sensor[[2]]$species,SLA=sensor[[2]]$SLA))[1:2,]
-
+upSLA $species <- c("bet","sal")
 #join SLA into allometry
-upAllo <- left_join(upAllo,upSLA, by="Species")
+upAllo <- left_join(upAllo,upSLA, by="species")
 flAllo <- left_join(flAllo,flSLA, by="species")
 #calculate leaf area in m2
-upAllo$aleaf <- (upAllo$ng.g * upAllo$SLA)
+upAllo$aleaf <- (upAllo$mass * upAllo$SLA)
 flAllo$aleaf <- (flAllo$mass * flAllo$SLA) 
 
 
-plot(upAllo$BD_cm,upAllo$aleaf)
+plot(upAllo$diameter,upAllo$aleaf)
 plot(flAllo$diameter,flAllo$aleaf)
+
+
+xl <- 0
+xh <- 4
+yl <- 0
+yh <- 1
+
+plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+		xlab= " ", ylab=" ", axes=FALSE)
+	points(flAllo$diameter[flAllo$species == "aln"],flAllo$aleaf[flAllo$species == "aln"], pch=19,col=coli[1])
+	points(flAllo$diameter[flAllo$species == "sal"],flAllo$aleaf[flAllo$species == "sal"], pch=19,col=coli[2])	
+	points(upAllo$diameter[upAllo$species == "sal"],upAllo$aleaf[upAllo$species == "sal"], pch=19,col=coli[4])
+	points(upAllo$diameter[upAllo$species == "bet"],upAllo$aleaf[upAllo$species == "bet"], pch=19,col=coli[3])	
+		
+axis(1, seq(0,4))		
+axis(2, seq(0,1, by=0.2), las=2) 
+legend("topleft", c("Alnus floodplain", "Salix floodplain", "Betula upland","Salix upland"),
+					col=coli, pch=19, bty="n")
+		
