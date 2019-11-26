@@ -50,6 +50,10 @@ plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots\\poster"
 ##################################
 # read in allometry data         #
 ##################################	
+alloUc <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\2012 - 2017 Density Gradient Shrubs.csv")
+alloUc  <- alloUc[substr(alloUc$Site,1,1) == "L",]
+
+
 
 alloF <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\flood_allom.csv")
 
@@ -228,6 +232,11 @@ upAllo$aleaf <- (upAllo$mass * upAllo$SLA)
 flAllo$aleaf <- (flAllo$mass * flAllo$SLA) 
 
 
+#check HA allom
+alloUc <- left_join(alloUc,upSLA, by="Species")
+alloUc$aleaf <- (alloUc$ng.g * alloUc$SLA)
+plot(allUc$BD_cm, alloUC$
+
 plot(upAllo$diameter,upAllo$aleaf)
 plot(flAllo$diameter,flAllo$aleaf)
 
@@ -243,9 +252,18 @@ plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 	points(flAllo$diameter[flAllo$species == "sal"],flAllo$aleaf[flAllo$species == "sal"], pch=19,col=coli[2])	
 	points(upAllo$diameter[upAllo$species == "sal"],upAllo$aleaf[upAllo$species == "sal"], pch=19,col=coli[4])
 	points(upAllo$diameter[upAllo$species == "bet"],upAllo$aleaf[upAllo$species == "bet"], pch=19,col=coli[3])	
-		
+	points(alloUc$BD_cm, alloUc$aleaf)
 axis(1, seq(0,4))		
 axis(2, seq(0,1, by=0.2), las=2) 
 legend("topleft", c("Alnus floodplain", "Salix floodplain", "Betula upland","Salix upland"),
 					col=coli, pch=19, bty="n")
-		
+					
+					
+#check HA lai
+lasum <- aggregate(alloUc$aleaf, by=list(alloUc$Site,alloUc$Plot), FUN="sum")
+colnames(lasum) <- c("Site","Plot","leaf.area")
+PlotA <- aggregate(alloUc$Area.Sampled..m2., by=list(alloUc$Site,alloUc$Plot), FUN="mean")	
+colnames(PlotA ) <- c("Site","Plot","ground.area")
+lai <- inner_join(lasum,PlotA, by=c("Site","Plot"))	
+lai$lai <- lai$leaf.area/lai$ground.area
+mean(lai$lai)
