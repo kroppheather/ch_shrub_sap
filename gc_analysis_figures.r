@@ -224,7 +224,7 @@ png(paste0(plotDir,"\\Tday.png"), width = 37, height = 35, units = "cm", res=300
 	}	
 	
 	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b")
-	points(metDay$doy[metDay$siteid == 2], metDay$Dday[metDay$siteid == 2]*DScale, pch=19, type="b", col="grey50")
+
 	
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
