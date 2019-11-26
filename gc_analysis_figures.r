@@ -69,7 +69,21 @@ coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
 			rgb(213,94,0, maxColorValue = 255), #salix floodplain
 			rgb(0,158,115, maxColorValue = 255), #betula upland
 			rgb(230,159,0, maxColorValue = 255)) #salix upland
-
+			
+			
+colDF <- data.frame(spsID= seq(1,4), 
+		species=c("Alnus","Salix","Betula","Salix"), 
+		siteid=c(1,1,2,2),
+		coli=coli,
+		col2=c(rgb(0,114,178,127, maxColorValue = 255), #alnus floodplain
+				rgb(213,94,0,127, maxColorValue = 255), #salix floodplain
+				rgb(0,158,115,127, maxColorValue = 255), #betula upland
+				rgb(230,159,0,127, maxColorValue = 255)), #salix upland
+		col3=c(rgb(0,114,178,50, maxColorValue = 255), #alnus floodplain
+				rgb(213,94,0,50, maxColorValue = 255), #salix floodplain
+				rgb(0,158,115,50, maxColorValue = 255), #betula upland
+				rgb(230,159,0,50, maxColorValue = 255)) #salix upland		
+		)
 ##################################
 # organize allometry data        #
 ##################################	
@@ -210,8 +224,7 @@ yl <- 0
 yh <- 25
 prMax <- 35
 prScale <- yh/prMax
-Dmax <- 3.5
-DScale <- yh/Dmax
+
 
 png(paste0(plotDir,"\\Tday.png"), width = 37, height = 35, units = "cm", res=300)
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
@@ -243,7 +256,7 @@ dev.off()
 	
 	
 #################################################################
-################## Plant allometry       ########################
+################## Whole plant T         ########################
 #################################################################	
 
 #get sla from sensors
@@ -260,39 +273,53 @@ flAllo <- left_join(flAllo,flSLA, by="species")
 upAllo$aleaf <- (upAllo$mass * upAllo$SLA)
 flAllo$aleaf <- (flAllo$mass * flAllo$SLA) 
 
+#aggregate
+upLeaf <- aggregate(upAllo$aleaf, by=list(upAllo$Species), FUN="mean", na.rm=TRUE)
+colnames(upLeaf) <- c("Species","leafP")
+upLeaf$siteid <- rep(2,2)
+floodLeaf <- aggregate(flAllo$aleaf, by=list(flAllo$Species), FUN="mean", na.rm=TRUE)
+colnames(floodLeaf) <- c("Species","leafP")
+floodLeaf$siteid <- rep(1,2)
+plantL <- rbind(upLeaf, floodLeaf)
 
-#check HA allom
-alloUc <- left_join(alloUc,upSLA, by="Species")
-alloUc$aleaf <- (alloUc$ng.g * alloUc$SLA)
-plot(allUc$BD_cm, alloUC$
+plantL$spsID <- ifelse(plantL$siteid==1&plantL$Species == "Alnus",1,
+				ifelse(plantL$siteid==1&plantL$Species == "Salix",2,
+				ifelse(plantL$siteid==2&plantL$Species == "Betula",3,
+				ifelse(plantL$siteid==2&plantL$Species == "Salix",4,NA))))
 
-plot(upAllo$diameter,upAllo$aleaf)
-plot(flAllo$diameter,flAllo$aleaf)
+#join into transpiration
+tdayDF <- left_join(tdayDF, plantL, by="spsID")
+
+#transpiration estimates at the whole plant level
+tdayDF$L.plant.day <- tdayDF$L.m2.day*tdayDF$leafP
+tdayDF$L.plant.daySD <- tdayDF$L.m2.daySD*tdayDF$leafP
+
+tdayDF$jitteri <- runif(nrow(tdayDF),0,0.5)
 
 
-xl <- 0
-xh <- 4
+#get quantiles
+tquant <- list()
+for(i in 1:4){
+	tquant[[i]] <- quantile(tdayDF$L.plant.day[tdayDF$spsID == i], prob=c(0.025,0.25,0.50,0.75,0.975))
+
+}
+
+wd <- 20
+hd <- 20
+xl <- .75
+xh <- 4.75
+yl2 <- 0
+yh2 <- 0.7
+
 yl <- 0
-yh <- 1
+yh <- 25
+prMax <- 35
+prScale <- yh/prMax
 
-plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-		xlab= " ", ylab=" ", axes=FALSE)
-	points(flAllo$diameter[flAllo$species == "aln"],flAllo$aleaf[flAllo$species == "aln"], pch=19,col=coli[1])
-	points(flAllo$diameter[flAllo$species == "sal"],flAllo$aleaf[flAllo$species == "sal"], pch=19,col=coli[2])	
-	points(upAllo$diameter[upAllo$species == "sal"],upAllo$aleaf[upAllo$species == "sal"], pch=19,col=coli[4])
-	points(upAllo$diameter[upAllo$species == "bet"],upAllo$aleaf[upAllo$species == "bet"], pch=19,col=coli[3])	
-	points(alloUc$BD_cm, alloUc$aleaf)
-axis(1, seq(0,4))		
-axis(2, seq(0,1, by=0.2), las=2) 
-legend("topleft", c("Alnus floodplain", "Salix floodplain", "Betula upland","Salix upland"),
-					col=coli, pch=19, bty="n")
-					
-					
-#check HA lai
-lasum <- aggregate(alloUc$aleaf, by=list(alloUc$Site,alloUc$Plot), FUN="sum")
-colnames(lasum) <- c("Site","Plot","leaf.area")
-PlotA <- aggregate(alloUc$Area.Sampled..m2., by=list(alloUc$Site,alloUc$Plot), FUN="mean")	
-colnames(PlotA ) <- c("Site","Plot","ground.area")
-lai <- inner_join(lasum,PlotA, by=c("Site","Plot"))	
-lai$lai <- lai$leaf.area/lai$ground.area
-mean(lai$lai)
+
+png(paste0(plotDir,"\\Tplant.png"), width = 37, height = 35, units = "cm", res=300)
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+		xlab= " ", ylab=" ", axes=FALSE)	
+	for(i in 1:4){
+	points(tdayDF$spsID[tdayDF$spsID == i] +tdayDF$jitteri[tdayDF$spsID == i], tdayDF$L.plant.day[tdayDF$spsID == i])
+	}
