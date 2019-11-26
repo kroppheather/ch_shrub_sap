@@ -46,6 +46,26 @@ datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots\\poster"
 
 
+
+##################################
+# read in allometry data         #
+##################################	
+alloU <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\2012 - 2017 Density Gradient Shrubs.csv")
+alloF <- read.csv("c:\\Users\\hkropp\\Google Drive\\ch_shrub\\flood_allom.csv")
+alloU <- 
+
+
+##################################
+# organize allometry data        #
+##################################	
+#pull out only low density sites
+#all site ids start with L for low density
+upAllo <- alloU[substr(alloU$Site,1,1) == "L",]
+#only look at whole plant allometry for floodplain
+flAllo <- alloF[alloF$type == "plant",]
+flAllo <- alloF[alloF$site == "y4" | alloF$site == "amb",] 
+
+
 ##################################
 # organize met data              #
 ##################################	
@@ -153,7 +173,7 @@ coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
 			rgb(0,158,115, maxColorValue = 255), #betula upland
 			rgb(230,159,0, maxColorValue = 255)) #salix upland
 
-wd <- 15
+wd <- 20
 hd <- 15
 xl <- 180
 xh <- 240
@@ -161,8 +181,8 @@ yl <- 0
 yh <- 5
 
 
-png(paste0(plotDir,"\\Tday.png"), width = 17, height = 17, units = "cm", res=300)
-	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
+png(paste0(plotDir,"\\Tday.png"), width = 20, height = 33, units = "cm", res=300)
+	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=lcm(hd))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
 	for(i in 1:4){	
@@ -175,3 +195,28 @@ png(paste0(plotDir,"\\Tday.png"), width = 17, height = 17, units = "cm", res=300
 		
 dev.off()	
 	
+	
+	
+	
+	
+#################################################################
+################## Plant allometry       ########################
+#################################################################	
+
+#get sla from sensors
+flSLA <- unique(data.frame(Species=sensor[[1]]$species,SLA=sensor[[1]]$SLA))
+flSLA$species <- c("sal","aln")
+
+#not recognizing names as different even though they are exactly the same...
+upSLA <- 	unique(data.frame(Species=sensor[[2]]$species,SLA=sensor[[2]]$SLA))[1:2,]
+
+#join SLA into allometry
+upAllo <- left_join(upAllo,upSLA, by="Species")
+flAllo <- left_join(flAllo,flSLA, by="species")
+#calculate leaf area in m2
+upAllo$aleaf <- (upAllo$ng.g * upAllo$SLA)
+flAllo$aleaf <- (flAllo$mass * flAllo$SLA) 
+
+
+plot(upAllo$BD_cm,upAllo$aleaf)
+plot(flAllo$diameter,flAllo$aleaf)
