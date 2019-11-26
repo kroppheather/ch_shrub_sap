@@ -174,6 +174,18 @@ tdayDF$spsID <- ifelse(tdayDF$siteid==1&tdayDF$species == "Alnus",1,
 				ifelse(tdayDF$siteid==1&tdayDF$species == "Salix",2,
 				ifelse(tdayDF$siteid==2&tdayDF$species == "Betula",3,
 				ifelse(tdayDF$siteid==2&tdayDF$species == "Salix",4,NA))))
+				
+#summarize met information for daily timescales
+Tday <- aggregate(metDF$temp, by=list(metDF$doy,metDF$siteid), FUN="mean", na.rm=TRUE)				
+colnames(Tday) <- c("doy","siteid","Tday")
+
+#average daily vpd
+VPday <- aggregate(metDF$D, by=list(metDF$doy,metDF$siteid), FUN="mean", na.rm=TRUE)
+colnames(VPday) <- c("doy","siteid","Dday")
+
+Prday <- 	unique(data.frame(doy=metDF$doy,siteid=metDF$siteid, Prday=metDF$Pr.mm))								
+metDay <- full_join(Tday,Prday, by=c("doy","siteid"))	
+metDay <- full_join(metDay, VPday, by=c("doy","siteid"))
 ##################################
 # plots                          #
 ##################################
@@ -187,17 +199,34 @@ coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
 			rgb(0,158,115, maxColorValue = 255), #betula upland
 			rgb(230,159,0, maxColorValue = 255)) #salix upland
 
-wd <- 20
+wd <- 35
 hd <- 15
 xl <- 180
-xh <- 240
+xh <- 240.5
+yl2 <- 0
+yh2 <- 5
+
 yl <- 0
-yh <- 5
+yh <- 25
+prMax <- 35
+prScale <- yh/prMax
+Dmax <- 3.5
+DScale <- yh/Dmax
 
-
-png(paste0(plotDir,"\\Tday.png"), width = 20, height = 33, units = "cm", res=300)
-	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=lcm(hd))
+png(paste0(plotDir,"\\Tday.png"), width = 37, height = 35, units = "cm", res=300)
+	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
+	
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+		xlab= " ", ylab=" ", axes=FALSE)	
+	for(i in 1:dim(metDay)[1]){
+		polygon(c(metDay$doy[i]-0.25,metDay$doy[i]-0.25,metDay$doy[i]+0.25,metDay$doy[i]+0.25),
+			c(0,metDay$Prday[i]*prScale,metDay$Prday[i]*prScale,0), border=NA, col=rgb(115,194,251,100,maxColorValue=255))
+	}	
+	
+	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b")
+	points(metDay$doy[metDay$siteid == 2], metDay$Dday[metDay$siteid == 2]*DScale, pch=19, type="b", col="grey50")
+	
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
 	for(i in 1:4){	
 		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
