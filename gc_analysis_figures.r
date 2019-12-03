@@ -342,17 +342,32 @@ for(i in 1:4){
 
 }
 
-wd <- 15
-hd <- 15
+wd <- 13
+hd <- 13
 xl <- .75
 xh <- 4.75
 yl <- 0
 yh <- 0.7
 
+#tick width
+tlw <- 2
+#axis tick label size
+alc <- 1.5
+#axis width 
+alw <- 2
+#axis label size
+llc <- 2
+#point size
+pcx <- 2
+#line thickness
+llw <- 3
+xseq <- seq(1,4)+0.25
+xseqA <- seq(0,5)+0.25
 
 
-
-png(paste0(plotDir,"\\Tplant.png"), width = 17, height = 17, units = "cm", res=300)
+png(paste0(plotDir,"\\Tplant.png"), width = 20, height = 20, units = "cm", res=300)
+	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
+	par(mai=c(0,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)	
 	for(i in 1:4){
@@ -364,12 +379,20 @@ png(paste0(plotDir,"\\Tplant.png"), width = 17, height = 17, units = "cm", res=3
 	polygon(c(i,i,i+0.5,i+0.5),
 			c(tquant[[i]][2],tquant[[i]][4],tquant[[i]][4],tquant[[i]][2]), border=NA, col=as.character(colDF$col3[i]))
 	
-	arrows(i,tquant[[i]][3],i+0.5,tquant[[i]][3], code=0, lwd=4, col=coli[i])
+	arrows(i,tquant[[i]][3],i+0.5,tquant[[i]][3], code=0, lwd=5, col=coli[i])
 	}
+	axis(1, xseqA, rep(" ", length(xseqA)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
+	mtext(yseq, at=yseq, side=2, line=1, cex=alc, las=2)
+	mtext(c("Floodplain","Floodplain","Upland","Upland"), at=xseq, side=1, line=1, cex=alc)	
+	mtext(c(expression(italic(Alnus)),expression(italic(Salix)),expression(italic(Betula)),expression(italic(Salix))), at=xseq, side=1, line=2, cex=alc)
+	mtext(expression(paste("Transpiration")), side=2, line=5, cex=llc)
+	mtext(expression(paste("(L plant"^"-1","day"^"-1",")")), side=2, line=3, cex=llc)
+	mtext("Position and Genus", side=1, line=4, cex=llc)
 	
 	
-dev.off()	
-	
+	dev.off()	
+
 	
 #################################################################
 ################## Patterns in stomatal conductance##############
