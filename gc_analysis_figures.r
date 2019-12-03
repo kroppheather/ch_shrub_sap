@@ -219,8 +219,8 @@ coli <- c(rgb(0,114,178, maxColorValue = 255), #alnus floodplain
 			rgb(0,158,115, maxColorValue = 255), #betula upland
 			rgb(230,159,0, maxColorValue = 255)) #salix upland
 
-wd <- 35
-hd <- 15
+wd <- 45
+hd <- 10
 xl <- 180
 xh <- 240.5
 yl2 <- 0
@@ -231,10 +231,24 @@ yh <- 25
 prMax <- 35
 prScale <- yh/prMax
 
+xseq <- seq(180, 240, by=10)
+yseq <- seq(0,25, by=5)
+yseq2 <- seq(0,35, by=5)*prScale
+yseq3 <- seq(0,5, by=1)
+#tick width
+tlw <- 3
+#axis tick label size
+alc <- 2
+#axis width 
+alw <- 2
+#axis label size
+llc <- 3
+#point size
+pcx <- 3
 
-png(paste0(plotDir,"\\Tday.png"), width = 37, height = 35, units = "cm", res=300)
+png(paste0(plotDir,"\\Tday.png"), width = 57, height = 28, units = "cm", res=300)
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
-	
+	par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)	
 	for(i in 1:dim(metDay)[1]){
@@ -242,19 +256,37 @@ png(paste0(plotDir,"\\Tday.png"), width = 37, height = 35, units = "cm", res=300
 			c(0,metDay$Prday[i]*prScale,metDay$Prday[i]*prScale,0), border=NA, col=rgb(115,194,251,100,maxColorValue=255))
 	}	
 	
-	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b")
-
+	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b", cex=pcx)
 	
+	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
+	axis(4, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
+	mtext(yseq, at=yseq, side=2, line=2, cex=alc, las=2)
+	mtext(seq(0,35, by=5), at=yseq2, side=4, line=2, cex=alc, las=2)
+	mtext(expression(paste("Air temperature")), side=2, line=9, cex=llc)
+	mtext(expression(paste("(",degree,"C)")), side=2, line=5, cex=llc)	
+	mtext("Precipitation", side=4, line=6, cex=llc)
+	mtext("(mm)", side=4, line=9, cex=llc)
+	legend("topleft", c("Temperature", "Precipitation"), pch=c(19, 15), col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2)
+	
+	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
 	for(i in 1:4){	
 		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
-			type="b")
+			type="b", cex=pcx)
 		arrows(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]-tdayDF$L.m2.daySD[tdayDF$spsID==i],
-		tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]+tdayDF$L.m2.daySD[tdayDF$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5))
+		tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]+tdayDF$L.m2.daySD[tdayDF$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5),lwd=3)
 	}
-		
-		
+	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
+	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
+	axis(2, yseq3, rep(" ", length(yseq3)), lwd.ticks=tlw, lwd=alw)
+	mtext(yseq3, at=yseq3, side=2, line=2, cex=alc, las=2)
+	mtext(expression(paste("Transpiration ")), side=2, line=9, cex=llc)
+	mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=5, cex=llc)
+	mtext("Day of Year", side=1, line=5, cex=llc)
+	legend("topleft", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix))), pch=19, col=c(coli[1],coli[2]), bty="n", cex=2)
+	legend("topright", c(expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))), pch=19, col=c(coli[3],coli[4]), bty="n", cex=2)
 dev.off()	
 	
 	
@@ -366,7 +398,12 @@ gcDayN <- gcDayN[gcDayN$Ngc > 6,]
 #join back into dataframe to subset		
 gcDF2 <- inner_join(gcDF, gcDayN, by=c("doy","spsID"))
 
-
+plot(gcDF2$doy, gcDF2$gc.mol.m2.s)
+axis(1, seq(180,240, by=2))
+points(gcDF2$doy[gcDF2$spsID==1], gcDF2$gc.mol.m2.s[gcDF2$spsID==1], pch=19, col=coli[1])
+points(gcDF2$doy[gcDF2$spsID==2], gcDF2$gc.mol.m2.s[gcDF2$spsID==2], pch=19, col=coli[2])
+points(gcDF2$doy[gcDF2$spsID==3], gcDF2$gc.mol.m2.s[gcDF2$spsID==3], pch=19, col=coli[3])
+points(gcDF2$doy[gcDF2$spsID==4], gcDF2$gc.mol.m2.s[gcDF2$spsID==4], pch=19, col=coli[4])
 #fit regression
 fit <- list()
 Int <- numeric()
