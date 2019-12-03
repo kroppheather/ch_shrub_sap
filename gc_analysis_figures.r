@@ -82,7 +82,13 @@ colDF <- data.frame(spsID= seq(1,4),
 		col3=c(rgb(0,114,178,50, maxColorValue = 255), #alnus floodplain
 				rgb(213,94,0,50, maxColorValue = 255), #salix floodplain
 				rgb(0,158,115,50, maxColorValue = 255), #betula upland
-				rgb(230,159,0,50, maxColorValue = 255)) #salix upland		
+				rgb(230,159,0,50, maxColorValue = 255)), #salix upland	
+
+		col4=c(rgb(0,114,178,80, maxColorValue = 255), #alnus floodplain
+				rgb(213,94,0,80, maxColorValue = 255), #salix floodplain
+				rgb(0,158,115,80, maxColorValue = 255), #betula upland
+				rgb(230,159,0,80, maxColorValue = 255)) #salix upland	
+				
 		)
 ##################################
 # organize allometry data        #
@@ -304,22 +310,153 @@ for(i in 1:4){
 
 }
 
-wd <- 20
-hd <- 20
+wd <- 15
+hd <- 15
 xl <- .75
 xh <- 4.75
-yl2 <- 0
-yh2 <- 0.7
-
 yl <- 0
-yh <- 25
-prMax <- 35
-prScale <- yh/prMax
+yh <- 0.7
 
 
-png(paste0(plotDir,"\\Tplant.png"), width = 37, height = 35, units = "cm", res=300)
+
+
+png(paste0(plotDir,"\\Tplant.png"), width = 17, height = 17, units = "cm", res=300)
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)	
 	for(i in 1:4){
-	points(tdayDF$spsID[tdayDF$spsID == i] +tdayDF$jitteri[tdayDF$spsID == i], tdayDF$L.plant.day[tdayDF$spsID == i])
+	points(tdayDF$spsID[tdayDF$spsID == i] +tdayDF$jitteri[tdayDF$spsID == i], tdayDF$L.plant.day[tdayDF$spsID == i], pch=19,col=as.character(colDF$col4[i]))
+	arrows(i+0.25,tquant[[i]][1],i+0.25,tquant[[i]][5], code=0, lwd=2, col=as.character(colDF$col3[i]))
 	}
+	
+	for(i in 1:4){
+	polygon(c(i,i,i+0.5,i+0.5),
+			c(tquant[[i]][2],tquant[[i]][4],tquant[[i]][4],tquant[[i]][2]), border=NA, col=as.character(colDF$col3[i]))
+	
+	arrows(i,tquant[[i]][3],i+0.5,tquant[[i]][3], code=0, lwd=4, col=coli[i])
+	}
+	
+	
+dev.off()	
+	
+	
+#################################################################
+################## Patterns in stomatal conductance##############
+#################################################################	
+#unlist gc
+
+gcDF <- rbind(gcSpec[[1]],gcSpec[[2]])
+
+gcDF <- left_join(gcDF, metDF, by=c("hour","doy","year", "siteid"))
+
+gcDF$spsID <- ifelse(gcDF$siteid==1&gcDF$species == "Alnus",1,
+				ifelse(gcDF$siteid==1&gcDF$species == "Salix",2,
+				ifelse(gcDF$siteid==2&gcDF$species == "Betula",3,
+				ifelse(gcDF$siteid==2&gcDF$species == "Salix",4,NA))))
+				
+#just look at VPD
+#since Par has a strong influence exclude low PAR under 200
+gcDF <- gcDF[gcDF$PAR > 150,]
+
+				
+#aggregate to figure out how many daily observations
+gcDayN <- 	aggregate(gcDF$gc.mol.m2.s, by=list(gcDF$doy, gcDF$spsID), FUN="length")			
+colnames(gcDayN) <- c("doy","spsID","Ngc")		
+#subset to exclude days with only a few observations
+gcDayN <- gcDayN[gcDayN$Ngc > 6,]
+#join back into dataframe to subset		
+gcDF2 <- inner_join(gcDF, gcDayN, by=c("doy","spsID"))
+
+
+#fit regression
+fit <- list()
+Int <- numeric()
+Slope <- numeric()
+minD <- numeric(0)
+maxD <- numeric(0)
+
+for(i in 1:nrow(gcDayN)){
+	fit[[i]] <- lm(gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]] ~ 
+					log(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]]))
+	Int[i] <- coefficients(fit[[i]])[1]
+	Slope[i] <- coefficients(fit[[i]])[2] 
+	minD[i] <- min(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]])
+	maxD[i] <- max(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]])
+}
+
+gcDayN1 <- which(gcDayN$spsID == 1 ) 
+gcDayN2 <- which(gcDayN$spsID == 2 ) 
+gcDayN3 <- which(gcDayN$spsID == 3 ) 
+gcDayN4 <- which(gcDayN$spsID == 4 ) 
+
+wd <- 15
+hd <- 15
+xl <- 0.5
+xh <- 2.75
+
+
+yl <- 0
+yh <- 0.75
+
+
+
+png(paste0(plotDir,"\\gcDay.png"), width = 35, height = 20, units = "cm", res=300)
+	layout(matrix(c(1,2),ncol=2), width=rep(lcm(wd),2),height=lcm(hd))
+	par(mai=c(0,0,0,0))
+		plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+			xlab= " ", ylab=" ", axes=FALSE)	
+		for(i in gcDayN1){
+		if(Slope[i] < 0){
+			points(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], 
+				gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], pch=19, col=as.character(colDF$col3[1]))
+		}
+		}
+		for(i in gcDayN1){
+		if(Slope[i] < 0){
+		points(seq(minD[i],maxD[i], length.out=100), Int[i] + (Slope[i]*log(seq(minD[i],maxD[i], length.out=100))), type="l", col=as.character(colDF$coli[1]),
+		lwd=2)
+		}
+		}
+		for(i in gcDayN2){
+		if(Slope[i] < 0){
+			points(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], 
+				gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], pch=19, col=as.character(colDF$col3[2]))
+		}
+		}
+		for(i in gcDayN2){
+		if(Slope[i] < 0){
+		points(seq(minD[i],maxD[i], length.out=100), Int[i] + (Slope[i]*log(seq(minD[i],maxD[i], length.out=100))), type="l", col=as.character(colDF$coli[2]),
+		lwd=2)
+		}
+		}
+		par(mai=c(0,0,0,0))
+		plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
+			xlab= " ", ylab=" ", axes=FALSE)	
+			
+		for(i in gcDayN3){
+		if(Slope[i] < 0){
+			points(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], 
+				gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], pch=19, col=as.character(colDF$col3[3]))
+		}
+		}
+		for(i in gcDayN3){
+		if(Slope[i] < 0){
+		points(seq(minD[i],maxD[i], length.out=100), Int[i] + (Slope[i]*log(seq(minD[i],maxD[i], length.out=100))), type="l", col=as.character(colDF$coli[3]),
+		lwd=2)
+		}
+		}
+		for(i in gcDayN4){
+		if(Slope[i] < 0){
+			points(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], 
+				gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]], pch=19, col=as.character(colDF$col3[4]))
+		}
+		}
+		for(i in gcDayN4){
+		if(Slope[i] < 0){
+		points(seq(minD[i],maxD[i], length.out=100), Int[i] + (Slope[i]*log(seq(minD[i],maxD[i], length.out=100))), type="l", col=as.character(colDF$coli[4]),
+		lwd=2)
+		}
+		}
+dev.off()	
+
+
+
