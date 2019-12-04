@@ -273,6 +273,9 @@ png(paste0(plotDir,"\\Tday.png"), width = 57, height = 28, units = "cm", res=300
 	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
+	polygon(c(186.75,186.75,187.25,187.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
+	polygon(c(216.75,216.75,217.25,217.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
+	polygon(c(222.75,222.75,223.25,223.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
 	for(i in 1:4){	
 		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
 			type="b", cex=pcx)
@@ -658,4 +661,17 @@ png(paste0(plotDir,"\\gcDay3.png"), width = 16, height = 15, units = "cm", res=3
 							as.character(colDF$coli[3]),
 							as.character(colDF$coli[4])), bty="n", cex=1.5)	
 dev.off()	
+
+
+
+#check for days with all species for comparision
+s1 <- gcDayN[gcDayN$spsID == 1,]
+s2 <- gcDayN[gcDayN$spsID == 2,]
+s3 <- gcDayN[gcDayN$spsID == 3,]
+s4 <- gcDayN[gcDayN$spsID == 4,]
+
+a1 <- inner_join(s1,s2, by="doy")
+a2 <- inner_join(a1, s3, by="doy")
+a3 <- inner_join(a2, s4, by="doy")
+
 
