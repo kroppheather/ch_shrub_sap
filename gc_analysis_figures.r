@@ -250,12 +250,13 @@ png(paste0(plotDir,"\\Tday.png"), width = 57, height = 28, units = "cm", res=300
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
 	par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-		xlab= " ", ylab=" ", axes=FALSE)	
+		xlab= " ", ylab=" ", axes=FALSE)
+	#add precip
 	for(i in 1:dim(metDay)[1]){
 		polygon(c(metDay$doy[i]-0.25,metDay$doy[i]-0.25,metDay$doy[i]+0.25,metDay$doy[i]+0.25),
 			c(0,metDay$Prday[i]*prScale,metDay$Prday[i]*prScale,0), border=NA, col=rgb(115,194,251,100,maxColorValue=255))
 	}	
-	
+	#air temp
 	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b", cex=pcx)
 	
 	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
@@ -443,8 +444,10 @@ for(i in 1:nrow(gcDayN)){
 	maxD[i] <- max(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]])
 }
 
-
-
+gcDayN$slope <- Slope
+gcDayN$Int <- Int
+gcDayN$S <- abs(gcDayN$slope)/gcDayN$Int
+plot(gcDayN$spsID, gcDayN$S)
 wd <- 9
 hd <- 9
 xl <- 0.5
