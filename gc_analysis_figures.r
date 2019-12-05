@@ -230,8 +230,9 @@ yl <- 0
 yh <- 25
 prMax <- 35
 prScale <- yh/prMax
+Dscale <- yh/3.5
 
-xseq <- seq(180, 240, by=10)
+xseq <- seq(180, 240, by=5)
 yseq <- seq(0,25, by=5)
 yseq2 <- seq(0,35, by=5)*prScale
 yseq3 <- seq(0,5, by=1)
@@ -246,7 +247,7 @@ llc <- 3
 #point size
 pcx <- 3
 
-png(paste0(plotDir,"\\Tday.png"), width = 57, height = 28, units = "cm", res=300)
+png(paste0(plotDir,"\\Tday.png"), width = 59, height = 28, units = "cm", res=300)
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
 	par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
@@ -258,24 +259,28 @@ png(paste0(plotDir,"\\Tday.png"), width = 57, height = 28, units = "cm", res=300
 	}	
 	#air temp
 	points(metDay$doy[metDay$siteid == 2], metDay$Tday[metDay$siteid == 2], pch=19, type="b", cex=pcx)
-	
+	points(metDay$doy[metDay$siteid == 1], metDay$Dday[metDay$siteid == 1]*Dscale, pch=19, type="b", col=rgb(.74,.74,.74,.75), cex=pcx)
+	points(metDay$doy[metDay$siteid == 2], metDay$Dday[metDay$siteid == 2]*Dscale, pch=19, type="b", col=rgb(.82,.7,.54,.75), cex=pcx)
 	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
 	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
 	axis(4, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq, at=yseq, side=2, line=2, cex=alc, las=2)
-	mtext(seq(0,35, by=5), at=yseq2, side=4, line=2, cex=alc, las=2)
+	mtext(seq(0,35, by=5)/10, at=yseq2, side=4, line=2, cex=alc, las=2)
 	mtext(expression(paste("Air temperature")), side=2, line=9, cex=llc)
 	mtext(expression(paste("(",degree,"C)")), side=2, line=5, cex=llc)	
 	mtext("Precipitation", side=4, line=6, cex=llc)
-	mtext("(mm)", side=4, line=9, cex=llc)
-	legend("topleft", c("Temperature", "Precipitation"), pch=c(19, 15), col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2)
-	
+	mtext("Vapor pressure deficit (VPD)", side=4, line=9, cex=llc)
+	mtext("(cm, kPa)", side=4, line=12, cex=llc)
+	legend("topleft", c("Temperature upland", "Precipitation"), pch=c(19, 15), 
+		col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2)
+	legend("topright", c( "VPD floodplain","VPD upland"), pch=c(19,19), 
+		col=c(col=rgb(.74,.74,.74,.75), col=rgb(.82,.7,.54,.75)), bty="n", cex=2)
 	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
-	polygon(c(186.75,186.75,187.25,187.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
-	polygon(c(216.75,216.75,217.25,217.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
-	polygon(c(222.75,222.75,223.25,223.25), c(0,5,5,0), border=NA, col=rgb(127,127,127, maxColorValue=255))
+	polygon(c(189.75,189.75,190.25,190.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
+	polygon(c(221.75,221.75,222.25,222.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
+	polygon(c(229.75,229.75,230.25,230.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
 	for(i in 1:4){	
 		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
 			type="b", cex=pcx)
@@ -454,14 +459,14 @@ plot(gcDayN$spsID, gcDayN$S)
 wd <- 9
 hd <- 9
 xl <- 0.5
-xh <- 2.75
+xh <- 1.75
 
 
 yl <- 0
 yh <- 0.75
 
 
-xseq <- seq(0.5,2.5, by=0.5)
+xseq <- seq(0.5,1.75, by=0.25)
 yseq <- seq(0,0.7, by =0.1)
 #tick width
 tlw <- 2
@@ -475,11 +480,13 @@ llc <- 2
 pcx <- 2
 #line thickness
 llw <- 3
+#legend size
+lcx <- 1.25
 
 
 
 ##########first day ##########
-doy1 <- 187
+doy1 <- 190
 
 gcDay1N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy1) 
 gcDay1N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy1) 
@@ -528,20 +535,20 @@ png(paste0(plotDir,"\\gcDay1.png"), width = 16, height = 15, units = "cm", res=3
 					col=c(as.character(colDF$col3[1]),
 							as.character(colDF$col3[2]),
 							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=1.5)
+							as.character(colDF$col3[4])), bty="n", cex=lcx)
 	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
 						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
 			pch=NA,lwd=llw,
 					col=c(as.character(colDF$coli[1]),
 							as.character(colDF$coli[2]),
 							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=1.5)	
+							as.character(colDF$coli[4])), bty="n", cex=lcx)	
 dev.off()	
 
 
 
 ##########second day ##########
-doy2 <- 223
+doy2 <- 222
 
 gcDay2N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy2) 
 gcDay2N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy2) 
@@ -590,20 +597,20 @@ png(paste0(plotDir,"\\gcDay2.png"), width = 16, height = 15, units = "cm", res=3
 					col=c(as.character(colDF$col3[1]),
 							as.character(colDF$col3[2]),
 							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=1.5)
+							as.character(colDF$col3[4])), bty="n", cex=lcx)
 	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
 						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
 			pch=NA,lwd=llw,
 					col=c(as.character(colDF$coli[1]),
 							as.character(colDF$coli[2]),
 							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=1.5)	
+							as.character(colDF$coli[4])), bty="n", cex=lcx)	
 dev.off()	
 
 
 
 ##########third day ##########
-doy3 <- 217
+doy3 <- 230
 
 gcDay3N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy3) 
 gcDay3N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy3) 
@@ -652,14 +659,14 @@ png(paste0(plotDir,"\\gcDay3.png"), width = 16, height = 15, units = "cm", res=3
 					col=c(as.character(colDF$col3[1]),
 							as.character(colDF$col3[2]),
 							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=1.5)
+							as.character(colDF$col3[4])), bty="n", cex=lcx)
 	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
 						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
 			pch=NA,lwd=llw,
 					col=c(as.character(colDF$coli[1]),
 							as.character(colDF$coli[2]),
 							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=1.5)	
+							as.character(colDF$coli[4])), bty="n", cex=lcx)	
 dev.off()	
 
 
