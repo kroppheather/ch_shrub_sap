@@ -14,7 +14,7 @@ datAir <- read.csv("/Volumes/data/data_repo/field_data/viperData/sensor/airport/
 met[[1]]$site <- rep(1, nrow(met[[1]]))
 met[[2]]$site <- rep(2, nrow(met[[2]]))
 
-#create new met dataset, retaining only "site", "hour", doy", "year", temp", "D"
+#create met_df, retaining only "site", "hour", doy", "year", temp", "D"
 first_met <- met[[1]][,c("site", "hour", "doy", "year", "temp", "D")]
 second_met <- met[[2]][,c("site", "hour", "doy", "year", "temp", "D")]
 met_df <- rbind(first_met, second_met)
