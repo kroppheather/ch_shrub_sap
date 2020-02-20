@@ -26,9 +26,10 @@
 
 ##################################
 # read in data                   #
-##################################
-source("c:\\Users\\hkropp\\Documents\\GitHub\\ch_shrub_sap\\sap_flow_process.r")
-
+source("c:\\Users\\cpham\\Documents\\GitHub\\ch_shrub_sap\\sap_flow_process.r")
+library(rjags)
+library(plyr)
+library(dplyr)
 #read in met data
 
 datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
@@ -43,7 +44,7 @@ datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 ##################################
 # set up directories             #
 ##################################
-plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots"
+plotDir <- "z:\\student_research\\cpham\\Plot"
 
 
 ##################################
@@ -134,3 +135,46 @@ gcDays$spsID <- ifelse(gcDays$siteid==1&gcDays$species == "Alnus",1,
 				ifelse(gcDays$siteid==1&gcDays$species == "Salix",2,
 				ifelse(gcDays$siteid==2&gcDays$species == "Betula",3,
 				ifelse(gcDays$siteid==2&gcDays$species == "Salix",4,NA))))
+
+
+#merge the list of gcSpec into a single dataframe
+# gcSpec[[1]]$site <- rep(1, nrow(gcSpec[[1]]))
+# gcSpec[[2]]$site <- rep(2, nrow(gcSpec[[2]]))
+gc_df <- rbind(gcSpec[[1]],  gcSpec[[2]])
+
+#get vpd at half hour rate
+met[[1]]$siteid <- rep(1, nrow(met[[1]]))
+met[[2]]$siteid <- rep(2, nrow(met[[2]]))
+
+#create met_df, retaining only "site", "hour", doy", "year", temp", "D"
+first_met <- met[[1]][,c("siteid", "hour", "doy", "year", "temp", "D")]
+second_met <- met[[2]][,c("siteid", "hour", "doy", "year", "temp", "D")]
+met_df_1 <- rbind(first_met, second_met)
+
+#match with gc_df by "site", "doy", "year", 
+met_gc <- met_df_1%>% right_join(gc_df, by=c("doy","year","hour","siteid"))
+
+#average daily air temperature for met_df
+met_daily_avg <- ddply(met_df_1, .(doy, year), summarize, daily_avg_temp = mean(temp))
+met_df_2 <- met_df_1%>% right_join(met_daily_avg, by=c("doy","year"))
+
+#added Pr.mm values from datAir into met_df
+met_df <- datAir %>%select("doy", "year", "Pr.mm")%>% right_join(met_df_2, by=c("doy","year"))
+met_df <- met_df[,c("hour", "doy", "year","siteid","temp", "D", "daily_avg_temp", "Pr.mm")]
+
+#add spsIDs (site-species) and spsdIDs (site-species-doy) to gc_df
+gc_df$spsID <- ifelse(gc_df$siteid==1&gc_df$species == "Alnus",1,
+               ifelse(gc_df$siteid==1&gc_df$species == "Salix",2,
+               ifelse(gc_df$siteid==2&gc_df$species == "Betula",3,
+               ifelse(gc_df$siteid==2&gc_df$species == "Salix",4,NA))))
+
+gc_df <- gc_df %>% 
+  mutate(spsdID = group_indices(., spsID, doy))
+
+#join met_df into gc_df
+gc_df <- gc_df%>% right_join(met_df %>%select("hour", "doy", "year","temp", "daily_avg_temp", "Pr.mm", "D"),
+                             by=c("hour", "doy","year"))
+
+#remove datasets met_df_1 and met_df_2
+rm(c="met_df_1", "met_df_2")
+
