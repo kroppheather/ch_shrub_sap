@@ -30,6 +30,7 @@ source("c:\\Users\\cpham\\Documents\\GitHub\\ch_shrub_sap\\sap_flow_process.r")
 library(rjags)
 library(plyr)
 library(dplyr)
+library(mcmcplots)
 #read in met data
 
 datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
@@ -172,9 +173,27 @@ gc_df <- gc_df %>%
   mutate(spsdID = group_indices(., spsID, doy))
 
 #join met_df into gc_df
-gc_df <- gc_df%>% right_join(met_df %>%select("hour", "doy", "year","temp", "daily_avg_temp", "Pr.mm", "D"),
-                             by=c("hour", "doy","year"))
+gc_df <- left_join(gc_df, met_df,by=c("hour", "doy","year", "siteid"))
+
+#join datQa into gc_df
+gc_df <- left_join(gc_df, datQa, by=c("doy", "hour", "year"))
 
 #remove datasets met_df_1 and met_df_2
 rm(c="met_df_1", "met_df_2")
 
+#join day_sps into gc_df
+day_sps <- aggregate(gc_df$gc.mol.m2.s, by = list(gc_df$doy,gc_df$spsID), FUN = "length")
+colnames(day_sps) <- c("doy", "spsID", "gc_size")
+day_sps$ssDay <- seq(1,nrow(day_sps))
+day_sps <- day_sps[day_sps$gc_size > 6,]
+gc_df <- inner_join(gc_df, day_sps, by = c("doy", "spsID"))
+
+# set up model 
+data_list <- list(Nobs = nrow(gc_df), gs = gc_df$gc.mol.m2.s, ss.obs =  gc_df$spsID, ssDay = gc_df$ssDay, 
+                  PAR = gc_df$PAR.QSOS.Par, D = gc_df$D, Nssday = nrow(day_sps), NSS  = 4)
+parms <- c("sigma", "gref", "S", "rep.gs")
+
+gs.mod <- jags.model("c:\\Users\\cpham\\Documents\\GitHub\\ch_shrub_sap\\model_code.r", data = data_list, 
+                     n.adapt = 3000, n.chains = 3)
+gs.samp <- coda.samples(gs.mod, variable.names = parms, n.iter = 3000, n.thin = 1)
+mcmcplot(gs.samp, dir = "Z:\\student_research\\cpham\\Plot\\mcmc\\Run 2", parms = c("sigma", "gref", "S"))

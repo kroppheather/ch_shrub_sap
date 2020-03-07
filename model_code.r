@@ -28,4 +28,9 @@ model{
     S[j]~dunif(0, 10)
   }
   
+  for (k in 1: NSS){
+    tau.gs[k] <- pow(sigma[k], -2)
+    sigma[k] ~ dunif(0, 1)
+  }
+  
 }
