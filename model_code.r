@@ -2,6 +2,7 @@ model{
   #################################
   #########Model likelihood########
   #################################
+  
   for(i in 1:Nobs){
     #likelihood for each tree
     gs[i]~dnorm(mu.gs[i],tau.gs[ss.obs[i]])
@@ -28,7 +29,7 @@ model{
     S[j]~dunif(0, 10)
   }
   
-  for (k in 1: NSS){
+  for(k in 1: NSS){
     tau.gs[k] <- pow(sigma[k], -2)
     sigma[k] ~ dunif(0, 1)
   }
