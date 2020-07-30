@@ -26,9 +26,11 @@
 
 ##################################
 # read in data                   #
-##################################
-source("c:\\Users\\hkropp\\Documents\\GitHub\\ch_shrub_sap\\sap_flow_process.r")
-
+source("c:\\Users\\cpham\\Documents\\GitHub\\ch_shrub_sap\\sap_flow_process.r")
+library(rjags)
+library(plyr)
+library(dplyr)
+library(mcmcplots)
 #read in met data
 
 datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
@@ -43,7 +45,7 @@ datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 ##################################
 # set up directories             #
 ##################################
-plotDir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\plots"
+plotDir <- "z:\\student_research\\cpham\\Plot"
 
 
 ##################################
@@ -82,12 +84,12 @@ metG <- left_join(metG,datAir, by=c("doy","year"))
 
 met <- list(metG,datLR)
 for(i in 1:2){
-	met[[i]]$siteid <- rep(i, dim(met[[i]])[1])
+  met[[i]]$siteid <- rep(i, dim(met[[i]])[1])
 }
 
 met2 <- list()
 for(i in 1:2){
-	met2[[i]] <- met[[i]][,order(names(met[[i]]))]
+  met2[[i]] <- met[[i]][,order(names(met[[i]]))]
 }
 
 
@@ -105,7 +107,7 @@ metDF <- metDF[metDF$year == 2016,]
 #add a site id
 #1=floodplain, 2= upland
 for(i in 1:2){
-	gcSpec[[i]]$siteid <- rep(i, dim(gcSpec[[i]])[1])
+  gcSpec[[i]]$siteid <- rep(i, dim(gcSpec[[i]])[1])
 }
 
 
@@ -131,6 +133,68 @@ gcDays <- left_join(gcDays, metDF, by=c("doy","year","hour","siteid"))
 siteDays <- unique(data.frame(doy=gcDays$doy,siteid=gcDays$siteid))
 
 gcDays$spsID <- ifelse(gcDays$siteid==1&gcDays$species == "Alnus",1,
-				ifelse(gcDays$siteid==1&gcDays$species == "Salix",2,
-				ifelse(gcDays$siteid==2&gcDays$species == "Betula",3,
-				ifelse(gcDays$siteid==2&gcDays$species == "Salix",4,NA))))
+                       ifelse(gcDays$siteid==1&gcDays$species == "Salix",2,
+                              ifelse(gcDays$siteid==2&gcDays$species == "Betula",3,
+                                     ifelse(gcDays$siteid==2&gcDays$species == "Salix",4,NA))))
+
+
+#merge the list of gcSpec into a single dataframe
+# gcSpec[[1]]$site <- rep(1, nrow(gcSpec[[1]]))
+# gcSpec[[2]]$site <- rep(2, nrow(gcSpec[[2]]))
+gc_df <- rbind(gcSpec[[1]],  gcSpec[[2]])
+
+#get vpd at half hour rate
+met[[1]]$siteid <- rep(1, nrow(met[[1]]))
+met[[2]]$siteid <- rep(2, nrow(met[[2]]))
+
+#create met_df, retaining only "site", "hour", doy", "year", temp", "D"
+first_met <- met[[1]][,c("siteid", "hour", "doy", "year", "temp", "D")]
+second_met <- met[[2]][,c("siteid", "hour", "doy", "year", "temp", "D")]
+met_df_1 <- rbind(first_met, second_met)
+
+#match with gc_df by "site", "doy", "year", 
+met_gc <- met_df_1%>% right_join(gc_df, by=c("doy","year","hour","siteid"))
+
+#average daily air temperature for met_df
+met_daily_avg <- ddply(met_df_1, .(doy, year), summarize, daily_avg_temp = mean(temp))
+met_df_2 <- met_df_1%>% right_join(met_daily_avg, by=c("doy","year"))
+
+#added Pr.mm values from datAir into met_df
+met_df <- datAir %>%select("doy", "year", "Pr.mm")%>% right_join(met_df_2, by=c("doy","year"))
+met_df <- met_df[,c("hour", "doy", "year","siteid","temp", "D", "daily_avg_temp", "Pr.mm")]
+
+#add spsIDs (site-species) and spsdIDs (site-species-doy) to gc_df
+gc_df$spsID <- ifelse(gc_df$siteid==1&gc_df$species == "Alnus",1,
+                      ifelse(gc_df$siteid==1&gc_df$species == "Salix",2,
+                             ifelse(gc_df$siteid==2&gc_df$species == "Betula",3,
+                                    ifelse(gc_df$siteid==2&gc_df$species == "Salix",4,NA))))
+
+gc_df <- gc_df %>% 
+  mutate(spsdID = group_indices(., spsID, doy))
+
+#join met_df into gc_df
+gc_df <- left_join(gc_df, met_df,by=c("hour", "doy","year", "siteid"))
+
+#join datQa into gc_df
+gc_df <- left_join(gc_df, datQa, by=c("doy", "hour", "year"))
+
+#remove datasets met_df_1 and met_df_2
+rm(c="met_df_1", "met_df_2")
+
+#join day_sps into gc_df
+day_sps <- aggregate(gc_df$gc.mol.m2.s, by = list(gc_df$doy,gc_df$spsID), FUN = "length")
+colnames(day_sps) <- c("doy", "spsID", "gc_size")
+day_sps$ssDay <- seq(1,nrow(day_sps))
+day_sps <- day_sps[day_sps$gc_size > 6,]
+gc_df <- inner_join(gc_df, day_sps, by = c("doy", "spsID"))
+
+# set up model 
+data_list <- list(Nobs = nrow(gc_df), gs = gc_df$gc.mol.m2.s, ss.obs =gc_df$spsID, ssDay = gc_df$ssDay, 
+                  PAR = gc_df$PAR.QSOS.Par, D = gc_df$D, Nssday = nrow(day_sps), NSS = 4)
+# specify parameters
+parms <- c("sigma", "gref", "S", "rep.gs")
+
+gs.mod <- jags.model("c:\\Users\\cpham\\Documents\\GitHub\\ch_shrub_sap\\model_code.r", data = data_list, 
+                     n.adapt = 3000, n.chains = 3)
+gs.samp <- coda.samples(gs.mod, variable.names = parms, n.iter = 3000, n.thin = 1)
+mcmcplot(gs.samp, dir = "Z:\\student_research\\cpham\\Plot\\mcmc\\Run 2", parms = c("sigma", "gref", "S", "rep.gs"))
