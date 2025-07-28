@@ -8,7 +8,7 @@
 ######################## in a floodplain (german site)     ########################
 ######################## and a low density upland forest   ########################
 ###################################################################################
-######################## R version 3.4.3                   ######################## 
+######################## R version 4.4.1                   ######################## 
 ###################################################################################
 ######################## outputs:                          ########################
 ######################## sensor (list) sensor info         ########################
@@ -29,7 +29,7 @@
 ##################################
 
 
-plotdir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\diag"
+plotdir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots"
 
 ##################################
 # indicate if making plots       #
@@ -37,7 +37,7 @@ plotdir <- "c:\\Users\\hkropp\\Google Drive\\ch_shrub\\diag"
 #turn on plotting
 #for sensor output diagnostics
 #1 = make plots, 0 = don't make plots
-plotcheck <- 0
+plotcheck <- 1
 
 ##################################
 # packages                       #
@@ -49,14 +49,15 @@ library(lubridate)
 # read in data                   #
 ##################################
 #German site files (floodplain)
-datG <-read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\campbell\\sapflow\\ger_f32_2016.csv")
-gLA <-read.csv("z:\\data_repo\\field_data\\viperData\\sapflow\\German_la.csv")
+dataDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/viperData"
+datG <-read.csv(paste0(dataDir,"/sensor/campbell/sapflow/ger_f32_2016.csv"))
+gLA <-read.csv(paste0(dataDir,"/sapflow/German_la.csv"))
 
 
 
 #LD files (upland)
-datL <- read.csv ("z:\\data_repo\\field_data\\viperData\\sensor\\campbell\\sapflow\\ld_f32_2016.csv")
-lLA <- read.csv("z:\\data_repo\\field_data\\viperData\\sapflow\\LD_la.csv")
+datL <- read.csv (paste0(dataDir,"/sensor/campbell/sapflow/ld_f32_2016.csv"))
+lLA <- read.csv(paste0(dataDir,"/sapflow/LD_la.csv"))
 
 
 #set up decimal days for plotting
@@ -66,10 +67,10 @@ datL$timeDD <- datL$doy+(datL$hour/24)
 #read in met data for gs calculations
 
 #read in met data
-datRH <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\RH.VP4.csv")
-datTC <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\decagon\\met\\TempC.VP4.csv")
-metG <- read.csv("z:\\data_repo\\field_data\\viperData\\German_met.csv")
-datAir <- read.csv("z:\\data_repo\\field_data\\viperData\\sensor\\airport\\airport.csv")
+datRH <- read.csv(paste0(dataDir,"/sensor/decagon/met/RH.VP4.csv"))
+datTC <- read.csv(paste0(dataDir,"/sensor/decagon/met/TempC.VP4.csv"))
+metG <- read.csv(paste0(dataDir,"/German_met.csv"))
+datAir <- read.csv(paste0(dataDir,"/sensor/airport/airport.csv"))
 ###################################################################################
 ###################################################################################
 ######## Part 1: calculate sap flow from data logger data                  ########    
