@@ -28,6 +28,7 @@
 # read in data                   #
 ##################################
 source("/Users/hkropp/Documents/GitHub/ch_shrub_sap/sap_flow_process.r")
+library(ggplot2)
 
 #read in met data
 datDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/viperData"
@@ -233,3 +234,23 @@ gcDF$spsID <- ifelse(gcDF$siteid==1&gcDF$species == "Alnus",1,
                      ifelse(gcDF$siteid==1&gcDF$species == "Salix",2,
                             ifelse(gcDF$siteid==2&gcDF$species == "Betula",3,
                                    ifelse(gcDF$siteid==2&gcDF$species == "Salix",4,NA))))
+# limit low PAR
+gcDF <- gcDF %>%
+  filter(PAR > 20)
+
+gcCount <- gcDF %>%
+  group_by(doy,year,spsID)%>%
+  summarise(n_obs=n()) %>%
+  filter(n_obs>6)%>%
+  filter(doy >= 187 & doy <= 230) # only days when all sensors had obs
+
+gcMod <- inner_join(gcDF, gcCount, by=c("doy","year","spsID"))
+unique(gcMod$doy)
+
+
+ggplot(gcDF %>% filter(doy==223), aes(PAR, gc.mol.m2.s, color=as.factor(spsID)))+
+  geom_point()
+ggplot(gcDF %>% filter(doy==223), aes(log(D), gc.mol.m2.s, color=as.factor(spsID)))+
+  geom_point()
+
+library(rjags)
