@@ -45,10 +45,21 @@ datQ <- data.frame(datQa[,1:3], PAR=datQa$PAR.QSOS.Par)
 ##################################
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots"
 
+#############################################
+##### read in allometry data         #######
 
-##################################
-# organize met data              #
-##################################	
+alloUc <- read.csv(paste0(datDir,"/2012 - 2017 Density Gradient Shrubs.csv"))
+alloUc  <- alloUc %>%
+  filter(substr(alloUc$Site,1,1) == "L")
+
+alloF <- read.csv(paste0(datDir,"/flood_allom.csv"))
+
+#only look at whole plant allometry 
+alloF <- alloF %>%
+  filter(alloF$type == "plant")
+##########################################
+# organize met data for all sites   ######
+	
 #join RH and TC
 datM <- inner_join(datRH, datTC, by=c("doy","year","hour","site"))
 datLt <- datM %>%
@@ -97,9 +108,9 @@ metDF <- left_join(metDF,datQ, by=c("doy","year","hour"))
 metDF <- metDF %>%
   filter(metDF$year == 2016)
 
-##################################
-# organize data                  #
-##################################
+##########################################
+####### organize gc data        ##########
+
 #add a site id
 #1=floodplain, 2= upland
 for(i in 1:2){
@@ -136,3 +147,77 @@ gcDays$spsID <- ifelse(gcDays$siteid==1&gcDays$species == "Alnus",1,
 				ifelse(gcDays$siteid==1&gcDays$species == "Salix",2,
 				ifelse(gcDays$siteid==2&gcDays$species == "Betula",3,
 				ifelse(gcDays$siteid==2&gcDays$species == "Salix",4,NA))))
+
+
+###################################################
+########### organize allometry data        #######
+
+#pull out only low density sites
+#all site ids start with L for low density
+
+
+flAllo <- alloF[alloF$site == "y4" | alloF$site == "amb",] 
+
+upAllo <- alloF[alloF$site == "exp" | alloF$site == "ldf",] 
+
+#############################################
+###### Daily transpiration and met    #######
+
+
+#combine transpiration from list
+#1=floodplain, 2= upland
+for(i in 1:2){
+  specTday[[i]]$siteid <- rep(i, dim(specTday[[i]])[1])
+}
+tdayDF <- rbind(specTday[[1]],specTday[[2]])
+#create site species id for graphing
+tdayDF$spsID <- ifelse(tdayDF$siteid==1&tdayDF$species == "Alnus",1,
+                       ifelse(tdayDF$siteid==1&tdayDF$species == "Salix",2,
+                              ifelse(tdayDF$siteid==2&tdayDF$species == "Betula",3,
+                                     ifelse(tdayDF$siteid==2&tdayDF$species == "Salix",4,NA))))
+
+metDaily <- metDF %>%
+  group_by(doy, year, siteid) %>%
+  summarise(Prday = sum(Pr.mm),
+            aveVPD = mean(D),
+            aveTemp = mean(temp))
+
+	
+#################################################################
+################## Whole plant T         ########################
+
+
+#get sla from sensors
+flSLA <- unique(data.frame(Species=sensor[[1]]$species,SLA=sensor[[1]]$SLA))
+flSLA$species <- c("sal","aln")
+
+#not recognizing names as different even though they are exactly the same...
+upSLA <- 	unique(data.frame(Species=sensor[[2]]$species,SLA=sensor[[2]]$SLA))[1:2,]
+upSLA $species <- c("bet","sal")
+#join SLA into allometry
+upAllo <- left_join(upAllo,upSLA, by="species")
+flAllo <- left_join(flAllo,flSLA, by="species")
+#calculate leaf area in m2
+upAllo$aleaf <- (upAllo$mass * upAllo$SLA)
+flAllo$aleaf <- (flAllo$mass * flAllo$SLA) 
+
+#aggregate
+upLeaf <- aggregate(upAllo$aleaf, by=list(upAllo$Species), FUN="mean", na.rm=TRUE)
+colnames(upLeaf) <- c("Species","leafP")
+upLeaf$siteid <- rep(2,2)
+floodLeaf <- aggregate(flAllo$aleaf, by=list(flAllo$Species), FUN="mean", na.rm=TRUE)
+colnames(floodLeaf) <- c("Species","leafP")
+floodLeaf$siteid <- rep(1,2)
+plantL <- rbind(upLeaf, floodLeaf)
+
+plantL$spsID <- ifelse(plantL$siteid==1&plantL$Species == "Alnus",1,
+                       ifelse(plantL$siteid==1&plantL$Species == "Salix",2,
+                              ifelse(plantL$siteid==2&plantL$Species == "Betula",3,
+                                     ifelse(plantL$siteid==2&plantL$Species == "Salix",4,NA))))
+
+#join into transpiration
+tdayDF <- left_join(tdayDF, plantL, by="spsID")
+
+#transpiration estimates at the whole plant level
+tdayDF$L.plant.day <- tdayDF$L.m2.day*tdayDF$leafP
+tdayDF$L.plant.daySD <- tdayDF$L.m2.daySD*tdayDF$leafP
