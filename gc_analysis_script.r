@@ -221,3 +221,15 @@ tdayDF <- left_join(tdayDF, plantL, by="spsID")
 #transpiration estimates at the whole plant level
 tdayDF$L.plant.day <- tdayDF$L.m2.day*tdayDF$leafP
 tdayDF$L.plant.daySD <- tdayDF$L.m2.daySD*tdayDF$leafP
+
+#################################################################
+################## gc organize.          ########################
+
+gcDF <- rbind(gcSpec[[1]],gcSpec[[2]])
+
+gcDF <- left_join(gcDF, metDF, by=c("hour","doy","year", "siteid"))
+
+gcDF$spsID <- ifelse(gcDF$siteid==1&gcDF$species == "Alnus",1,
+                     ifelse(gcDF$siteid==1&gcDF$species == "Salix",2,
+                            ifelse(gcDF$siteid==2&gcDF$species == "Betula",3,
+                                   ifelse(gcDF$siteid==2&gcDF$species == "Salix",4,NA))))
