@@ -288,49 +288,95 @@ datalist <- list(Nobs=nrow(gcMod),
                  D = gcMod$D,
                  NspsDay=nrow(spsData),
                  SPS=spsData$spsID, 
+                 airTcent = spsData$aveTemp-mean(spsData$aveTemp),
+                 pastpr = spsData$Pr_week,Nparm=3,
                  NSPS=4)
                  
-parms <- c( "alpha", "beta", "sig.alpha","delta","sig.delta","l.slope",  "sig.beta", "S","gref","rep.gs","sig.gs")
+parms <- c( "a", "b", "d","l.slope", "slope.temp", "S","gref","rep.gs","sig.gs")
 
-init=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
-               sig.beta=c(0.01,0.01,0.01,0.01),
-               alpha=c(30,30,30,30),
-               beta=c(1,1,1,1),
-               sig.gs=c(10,10,10,10),
-               delta=c(-4,-4,-4,-4),
-               sig.delta=c(0.1,0.1,0.1,0.1)),
-          list(sig.alpha=c(0.2,0.2,0.2,0.2),
-               sig.beta=c(0.1,0.1,0.1,0.1),
-               alpha=c(200,200,200,200),
-               beta=c(1.2,1.2,1.2,1.2),
-               sig.gs=c(30,30,30,30),
-               delta=c(-1,-1,-1,-1),
-               sig.delta=c(0.5,0.5,0.5,0.5)),
-          list(sig.alpha=c(0.5,0.5,0.5,0.5),
-               sig.beta=c(0.05,0.05,0.05,0.05),
-               alpha=c(500,500,500,500),
-               beta=c(0.8,0.8,0.8,0.8),
-               sig.gs=c(100,100,100,100),
-               delta=c(-6,-6,-6,-6),
-               sig.delta=c(0.7,0.7,0.7,0.7)))
+init=list(list(
+               a=matrix(c(130,130,130,130,
+                          0.1,0.1,0.1,0.1,
+                          0.01,0.01,0.01,0.01),ncol=4, byrow=TRUE),
+               b=matrix(c(1,1,1,1,
+                          0.01,0.01,0.01,0.01,
+                          0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+               d=matrix(c(-8,-8,-8,-8,
+                          0.01,0.01,0.01,0.01,
+                          0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+               sig.gs=c(100,100,100,100)),
+          list( a=matrix(c(230,230,230,230,
+                           0.01,0.01,0.01,0.01,
+                           0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+                b=matrix(c(1.2,1.2,1.2,1.2,
+                           -0.01,-0.01,-0.01,-0.01,
+                           -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+                d=matrix(c(-5,-5,-5,-5,
+                           -0.01,-0.01,-0.01,-0.01,
+                           -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+                sig.gs=c(120,120,120,120)),
+          list(a=matrix(c(180,180,180,180,
+                          -0.01,-0.01,-0.01,-0.01,
+                          -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+               b=matrix(c(0.8,0.8,0.8,0.8,
+                          0.2,0.2,0.2,0.2,
+                          -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
+               d=matrix(c(-3,-3,-3,-3,
+                          -0.2,-0.2,-0.2,-0.2,
+                          -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
+               sig.gs=c(60,60,60,60)))
 
-gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code_basic.r",
+gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code.r",
                      data=datalist, inits=init,
-                     n.adapt=20000,
+                     n.adapt=25000,
                      n.chains=3)
 
-gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=50000, thin=5)
+gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=90000, thin=30)
 
-MCMCtrace(gc_sample, params=c("alpha", "beta","delta", "sig.alpha", "sig.beta", "sig.delta","S","gref","sig.gs"),
+MCMCtrace(gc_sample, params=c("a", "b","d", "l.slope","S","gref","sig.gs"),
           pdf=TRUE, 
           wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
-          filename="gc_model_basic.pdf")
+          filename="gc_model.pdf")
 
-out <- MCMCsummary(gc_sample,params=c("alpha", "beta", "sig.alpha", "sig.beta", "S","gref","sig.gs"))
+out <- MCMCsummary(gc_sample,params=c("a", "b","d","sig.gs"))
 S_out <- MCMCsummary(gc_sample,params=c( "S"))
 gr_out <- MCMCsummary(gc_sample,params=c( "gref"))
 l_out <- MCMCsummary(gc_sample,params=c( "l.slope"))
+grep <- MCMCsummary(gc_sample,params=c( "rep.gs"))
+log_slope <- MCMCsummary(gc_sample,params=c( "slope.temp"))
+plot(grep$mean, gcMod$gc.mmol.m2.s)
+fit <- lm(gcMod$gc.mmol.m2.s ~ grep$mean)
+summary(fit)
+
+# save results
+write.csv(out, 
+"/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/parms_out.csv")
+write.csv(S_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/S_out.csv")
+write.csv(gr_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/gr_out.csv")
+write.csv(l_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/l_out.csv")
+write.csv(grep_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/grep_out.csv")
+
+write.csv(log_slope_out, 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/log_slope_out.csv")
+
 outMet <- spsData
 outMet$S <- S_out$mean
 outMet$gref <- gr_out$mean
+outMet$log_slope <- log_slope$mean
+ggplot(outMet, aes(aveTemp, S, color=as.factor(spsID)))+
+  geom_point()
+ggplot(outMet, aes(aveTemp, log_slope, color=as.factor(spsID)))+
+  geom_point()
+ggplot(outMet, aes(aveTemp, gref, color=as.factor(spsID)))+
+  geom_point()
 
+ggplot(outMet, aes(Pr_week, gref, color=as.factor(spsID)))+
+  geom_point()
+ggplot(outMet, aes(Pr_week, log_slope, color=as.factor(spsID)))+
+  geom_point()
+ggplot(outMet, aes(Pr_week, S, color=as.factor(spsID)))+
+  geom_point()

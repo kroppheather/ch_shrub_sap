@@ -65,8 +65,8 @@ model{
   #################################
   #########priors model########
   #################################
-  for(i in 1:NSPS){
-    for(j in 1:Nparm){
+  for(j in 1:Nparm){
+    for(i in 1:NSPS){
       a[j,i]~dnorm(0,0.0001)
       b[j,i]~dnorm(0,0.0001)
       d[j,i]~dnorm(0,0.0001)
