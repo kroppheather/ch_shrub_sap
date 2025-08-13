@@ -179,10 +179,21 @@ tdayDF$spsID <- ifelse(tdayDF$siteid==1&tdayDF$species == "Alnus",1,
 
 metDaily <- metDF %>%
   group_by(doy, year, siteid) %>%
-  summarise(Prday = sum(Pr.mm),
+  summarise(
             aveVPD = mean(D),
             aveTemp = mean(temp))
 
+Pr.air <- datAir %>%
+  filter(year==2016)
+
+Pr.week <- rep(NA,6)
+for(i in 7:nrow(Pr.air)){
+  Pr.week[i] <- sum(Pr.air$Pr.mm[(i-6):i])
+}
+Pr_week <- data.frame(doy=Pr.air$doy,
+                      year=Pr.air$year,
+                      Pr_week = Pr.week)
+metDaily <- left_join(metDaily, Pr_week, by=c("doy","year"))
 	
 #################################################################
 ################## Whole plant T         ########################
@@ -224,7 +235,7 @@ tdayDF$L.plant.day <- tdayDF$L.m2.day*tdayDF$leafP
 tdayDF$L.plant.daySD <- tdayDF$L.m2.daySD*tdayDF$leafP
 
 #################################################################
-################## gc organize.          ########################
+################## gc organize           ########################
 
 gcDF <- rbind(gcSpec[[1]],gcSpec[[2]])
 
@@ -248,9 +259,50 @@ gcMod <- inner_join(gcDF, gcCount, by=c("doy","year","spsID"))
 unique(gcMod$doy)
 
 
-ggplot(gcDF %>% filter(doy==223), aes(PAR, gc.mol.m2.s, color=as.factor(spsID)))+
-  geom_point()
-ggplot(gcDF %>% filter(doy==223), aes(log(D), gc.mol.m2.s, color=as.factor(spsID)))+
-  geom_point()
+#################################################################
+################## gc model              ########################
 
 library(rjags)
+library(MCMCvis)
+
+#finalize data org for model
+spsDay <- unique(data.frame(doy=gcMod$doy,
+                            year=gcMod$year,
+                            siteid=gcMod$siteid,
+                            spsID=gcMod$spsID))
+
+spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
+spsData$spsDayID <- seq(1,nrow(spsData))
+
+spsIDJoin <- spsData %>%
+  select(doy,year,siteid,spsID,spsDayID)
+
+gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
+
+# organize data for the model
+datalist <- list(Nobs=nrow(gcMod), 
+                 gs=gcMod$gc.mol.m2.s,
+                 spsID.obs=gcMod$spsID,
+                 PAR = gcMod$PAR,
+                 spsDay = gcMod$spsDayID,
+                 D = gcMod$D,
+                 NspsDay=nrow(spsData),
+                 SPS=spsData$spsID, 
+                 airTcent = spsData$aveTemp-mean(spsData$aveTemp),
+                 pastpr = spsData$Pr_week,
+                 NSPS=4,
+                 Nparm=3)
+                 
+parms <- c( "a", "b", "d","S","gref","l.slope","rep.gs")
+
+gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code.r",
+                     data=datalist,
+                     n.adapt=10000,
+                     n.chains=3)
+
+gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=90000,thin=30)
+
+MCMCtrace(gc_sample, params=c("a", "b", "d","S","gref","l.slope"),
+          pdf=TRUE, 
+          wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
+          filename="gc_model.pdf")

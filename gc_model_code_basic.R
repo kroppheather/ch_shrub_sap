@@ -39,9 +39,9 @@ model{
   #########parameter model ########
   #################################	
   for(i in 1:NspsDay){
-    gref[i]<-a[1,SPS[i]]+a[2,SPS[i]]*airTcent[i]+a[3,SPS[i]]*(pastpr[i])
-    S[i]<-b[1,SPS[i]]+b[2,SPS[i]]*airTcent[i]+b[3,SPS[i]]*(pastpr[i])
-    slope.temp[i] <-d[1,SPS[i]]+d[2,SPS[i]]*airTcent[i]+d[3,SPS[i]]*(pastpr[i])
+    gref[i]<-dnorm(alpha[SPS[i]], alpha.tau[SPS[i]])
+    S[i]<-dnorm(beta[SPS[i]], beta.tau[SPS[i]])
+    slope.temp[i] <-dnorm(delta[SPS[i]], delta.tau[SPS[i]])
     #Log transform light function slope to avoid numerical traps
     #and allow for better mixing and faster convergence of the non-linear model
     l.slope[i]<-exp(slope.temp[i])
@@ -66,11 +66,16 @@ model{
   #########priors model########
   #################################
   for(i in 1:NSPS){
-    for(j in 1:Nparm){
-      a[j,i]~dnorm(0,0.0001)
-      b[j,i]~dnorm(0,0.0001)
-      d[j,i]~dnorm(0,0.0001)
-    }
+
+      delta[i]~dnorm(0,0.0001)
+      alpha[i]~dnorm(0,0.0001)
+      gamma[i]~dnorm(0,0.0001)
+      alpha.tau[i]<-pow(sig.alpha[i],-2)
+      sig.alpha[i]~dunif(0,1000)	
+      beta.tau[i]<-pow(sig.beta[i],-2)
+      sig.beta[i]~dunif(0,1000)	      
+      delta.tau[i]<-pow(sig.delta[i],-2)
+      sig.delta[i]~dunif(0,1000)	    
   }
   
 }
