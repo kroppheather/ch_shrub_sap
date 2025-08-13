@@ -26,11 +26,10 @@ model{
     
     #gs.rep[i]~dnorm(mu.gs[i],tau.gs)
     #model for mean gs
-    mu.gs[i]<-oren.mod[i]
-    # *light[i]
+    mu.gs[i]<-oren.mod[i] *light[i]
     
     #light scaling function
-    #light[i]<-1-exp(-l.slope[spsDay[i]]*PAR[i])
+    light[i]<-1-exp(-l.slope[spsDay[i]]*PAR[i])
     
     #oren model 1999 for mean gs
     oren.mod[i]<-gref[spsDay[i]]*(1-(S[spsDay[i]]*log(D[i])))
@@ -42,10 +41,10 @@ model{
   for(i in 1:NspsDay){
     gref[i] ~ dnorm(alpha[SPS[i]], alpha.tau[SPS[i]])
     S[i] ~ dnorm(beta[SPS[i]], beta.tau[SPS[i]])
-    #slope.temp[i] ~ dnorm(delta[SPS[i]], delta.tau[SPS[i]])
+    slope.temp[i] ~ dnorm(delta[SPS[i]], delta.tau[SPS[i]])
     #Log transform light function slope to avoid numerical traps
     #and allow for better mixing and faster convergence of the non-linear model
-   # l.slope[i]<-exp(slope.temp[i])
+    l.slope[i]<-exp(slope.temp[i])
 
   }
   #################################
@@ -71,10 +70,13 @@ model{
    
       alpha[i]~dunif(0,1000)
       beta[i]~dunif(0,10)
+      delta[i]~dunif(-20,0)
       alpha.tau[i]<-pow(sig.alpha[i],-2)
       sig.alpha[i]~dunif(0,100)	
       beta.tau[i]<-pow(sig.beta[i],-2)
-      sig.beta[i]~dunif(0,10)	      
+      sig.beta[i]~dunif(0,10)	    
+      delta.tau[i]<-pow(sig.delta[i],-2)
+      sig.delta[i]~dunif(0,10)	 
   
   }
   
