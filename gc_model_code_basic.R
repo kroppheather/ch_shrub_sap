@@ -68,8 +68,8 @@ model{
   for(i in 1:NSPS){
 
       delta[i]~dnorm(0,0.0001)
-      alpha[i]~dnorm(0,0.0001)
-      gamma[i]~dnorm(0,0.0001)
+      alpha[i]~dunif(0,1000)
+      gamma[i]~dunif(0,10)
       alpha.tau[i]<-pow(sig.alpha[i],-2)
       sig.alpha[i]~dunif(0,1000)	
       beta.tau[i]<-pow(sig.beta[i],-2)
