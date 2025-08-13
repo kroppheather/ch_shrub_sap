@@ -278,10 +278,10 @@ spsIDJoin <- spsData %>%
   select(doy,year,siteid,spsID,spsDayID)
 
 gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
-
+gcMod$gc.mmol.m2.s <- gcMod$gc.mol.m2.s*1000
 # organize data for the model
 datalist <- list(Nobs=nrow(gcMod), 
-                 gs=gcMod$gc.mol.m2.s,
+                 gs=gcMod$gc.mmol.m2.s,
                  spsID.obs=gcMod$spsID,
                  PAR = gcMod$PAR,
                  spsDay = gcMod$spsDayID,
@@ -310,24 +310,10 @@ init=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
 
 gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code_basic.r",
                      data=datalist, inits=init,
-                     n.adapt=10000,
+                     n.adapt=20000,
                      n.chains=3)
-init=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
-               sig.beta=c(0.01,0.01,0.01,0.01),
-               alpha=c(30,30,30,30),
-               beta=c(1,1,1,1),
-               sig.gs=c(10,10,10,10)),
-          list(sig.alpha=c(0.2,0.2,0.2,0.2),
-               sig.beta=c(0.1,0.1,0.1,0.1),
-               alpha=c(200,200,200,200),
-               beta=c(1.2,1.2,1.2,1.2),
-               sig.gs=c(30,30,30,30)),
-          list(sig.alpha=c(0.5,0.5,0.5,0.5),
-               sig.beta=c(0.05,0.05,0.05,0.05),
-               alpha=c(500,500,500,500),
-               beta=c(0.8,0.8,0.8,0.8),
-               sig.gs=c(100,100,100,100)))
-gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=10000)
+
+gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=50000, thin=5)
 
 MCMCtrace(gc_sample, params=c("alpha", "beta", "sig.alpha", "sig.beta", "S","gref","sig.gs"),
           pdf=TRUE, 
