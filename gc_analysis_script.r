@@ -319,3 +319,11 @@ MCMCtrace(gc_sample, params=c("alpha", "beta", "sig.alpha", "sig.beta", "S","gre
           pdf=TRUE, 
           wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
           filename="gc_model_basic.pdf")
+
+out <- MCMCsummary(gc_sample,params=c("alpha", "beta", "sig.alpha", "sig.beta", "S","gref","sig.gs"))
+S_out <- MCMCsummary(gc_sample,params=c( "S"))
+gr_out <- MCMCsummary(gc_sample,params=c( "gref"))
+outMet <- spsData
+outMet$S <- S_out$mean
+outMet$gref <- gr_out$mean
+
