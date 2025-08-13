@@ -288,21 +288,48 @@ datalist <- list(Nobs=nrow(gcMod),
                  D = gcMod$D,
                  NspsDay=nrow(spsData),
                  SPS=spsData$spsID, 
-                 airTcent = spsData$aveTemp-mean(spsData$aveTemp),
-                 pastpr = spsData$Pr_week,
-                 NSPS=4,
-                 Nparm=3)
+                 NSPS=4)
                  
-parms <- c( "a", "b", "d","S","gref","l.slope","rep.gs")
+parms <- c( "alpha", "beta", "sig.alpha", "sig.beta", "S","gref","rep.gs","sig.gs")
 
-gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code.r",
-                     data=datalist,
+init=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
+               sig.beta=c(0.01,0.01,0.01,0.01),
+               alpha=c(30,30,30,30),
+               beta=c(1,1,1,1),
+               sig.gs=c(10,10,10,10)),
+          list(sig.alpha=c(0.2,0.2,0.2,0.2),
+               sig.beta=c(0.1,0.1,0.1,0.1),
+               alpha=c(200,200,200,200),
+               beta=c(1.2,1.2,1.2,1.2),
+               sig.gs=c(30,30,30,30)),
+          list(sig.alpha=c(0.5,0.5,0.5,0.5),
+               sig.beta=c(0.05,0.05,0.05,0.05),
+               alpha=c(500,500,500,500),
+               beta=c(0.8,0.8,0.8,0.8),
+               sig.gs=c(100,100,100,100)))
+
+gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code_basic.r",
+                     data=datalist, inits=init,
                      n.adapt=10000,
                      n.chains=3)
+init=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
+               sig.beta=c(0.01,0.01,0.01,0.01),
+               alpha=c(30,30,30,30),
+               beta=c(1,1,1,1),
+               sig.gs=c(10,10,10,10)),
+          list(sig.alpha=c(0.2,0.2,0.2,0.2),
+               sig.beta=c(0.1,0.1,0.1,0.1),
+               alpha=c(200,200,200,200),
+               beta=c(1.2,1.2,1.2,1.2),
+               sig.gs=c(30,30,30,30)),
+          list(sig.alpha=c(0.5,0.5,0.5,0.5),
+               sig.beta=c(0.05,0.05,0.05,0.05),
+               alpha=c(500,500,500,500),
+               beta=c(0.8,0.8,0.8,0.8),
+               sig.gs=c(100,100,100,100)))
+gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=10000)
 
-gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=90000,thin=30)
-
-MCMCtrace(gc_sample, params=c("a", "b", "d","S","gref","l.slope"),
+MCMCtrace(gc_sample, params=c("alpha", "beta", "sig.alpha", "sig.beta", "S","gref","sig.gs"),
           pdf=TRUE, 
           wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
-          filename="gc_model.pdf")
+          filename="gc_model_basic.pdf")
