@@ -262,105 +262,226 @@ unique(gcMod$doy)
 #################################################################
 ################## gc model              ########################
 
-library(rjags)
-library(MCMCvis)
+# library(rjags)
+# library(MCMCvis)
+# 
+# #finalize data org for model
+# spsDay <- unique(data.frame(doy=gcMod$doy,
+#                             year=gcMod$year,
+#                             siteid=gcMod$siteid,
+#                             spsID=gcMod$spsID))
+# 
+# spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
+# spsData$spsDayID <- seq(1,nrow(spsData))
+# 
+# spsIDJoin <- spsData %>%
+#   select(doy,year,siteid,spsID,spsDayID)
+# 
+# gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
+# gcMod$gc.mmol.m2.s <- gcMod$gc.mol.m2.s*1000
+# # organize data for the model
+# datalist <- list(Nobs=nrow(gcMod), 
+#                  gs=gcMod$gc.mmol.m2.s,
+#                  spsID.obs=gcMod$spsID,
+#                  PAR = gcMod$PAR,
+#                  spsDay = gcMod$spsDayID,
+#                  D = gcMod$D,
+#                  NspsDay=nrow(spsData),
+#                  SPS=spsData$spsID, 
+#                  airTcent = spsData$aveTemp-mean(spsData$aveTemp),
+#                  pastpr = spsData$Pr_week,Nparm=3,
+#                  NSPS=4)
+#                  
+# parms <- c( "a", "b", "d","l.slope", "slope.temp", "S","gref","rep.gs","sig.gs")
+# 
+# init=list(list(
+#                a=matrix(c(130,130,130,130,
+#                           0.1,0.1,0.1,0.1,
+#                           0.01,0.01,0.01,0.01),ncol=4, byrow=TRUE),
+#                b=matrix(c(1,1,1,1,
+#                           0.01,0.01,0.01,0.01,
+#                           0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+#                d=matrix(c(-8,-8,-8,-8,
+#                           0.01,0.01,0.01,0.01,
+#                           0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+#                sig.gs=c(100,100,100,100)),
+#           list( a=matrix(c(230,230,230,230,
+#                            0.01,0.01,0.01,0.01,
+#                            0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
+#                 b=matrix(c(1.2,1.2,1.2,1.2,
+#                            -0.01,-0.01,-0.01,-0.01,
+#                            -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+#                 d=matrix(c(-5,-5,-5,-5,
+#                            -0.01,-0.01,-0.01,-0.01,
+#                            -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+#                 sig.gs=c(120,120,120,120)),
+#           list(a=matrix(c(180,180,180,180,
+#                           -0.01,-0.01,-0.01,-0.01,
+#                           -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
+#                b=matrix(c(0.8,0.8,0.8,0.8,
+#                           0.2,0.2,0.2,0.2,
+#                           -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
+#                d=matrix(c(-3,-3,-3,-3,
+#                           -0.2,-0.2,-0.2,-0.2,
+#                           -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
+#                sig.gs=c(60,60,60,60)))
+# 
+# gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code.r",
+#                      data=datalist, inits=init,
+#                      n.adapt=25000,
+#                      n.chains=3)
+# 
+# gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=90000, thin=30)
+# 
+# MCMCtrace(gc_sample, params=c("a", "b","d", "l.slope","S","gref","sig.gs"),
+#           pdf=TRUE, 
+#           wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
+#           filename="gc_model.pdf")
+# 
+# out <- MCMCsummary(gc_sample,params=c("a", "b","d","sig.gs"))
+# S_out <- MCMCsummary(gc_sample,params=c( "S"))
+# gr_out <- MCMCsummary(gc_sample,params=c( "gref"))
+# l_out <- MCMCsummary(gc_sample,params=c( "l.slope"))
+# grep <- MCMCsummary(gc_sample,params=c( "rep.gs"))
+# log_slope <- MCMCsummary(gc_sample,params=c( "slope.temp"))
+# plot(grep$mean, gcMod$gc.mmol.m2.s)
+# fit <- lm(gcMod$gc.mmol.m2.s ~ grep$mean)
+# summary(fit)
+# 
+# # save results
+# write.csv(out, 
+# "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/parms_out.csv")
+# write.csv(S_out, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/S_out.csv")
+# write.csv(gr_out, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/gr_out.csv")
+# write.csv(l_out, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/l_out.csv")
+# write.csv(grep, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/grep_out.csv")
+# 
+# write.csv(log_slope, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/log_slope_out.csv")
+# 
+# 
+# 
+# outMet <- spsData
+# outMet$S <- S_out$mean
+# outMet$gref <- gr_out$mean
+# outMet$log_slope <- log_slope$mean
+# ggplot(outMet, aes(aveTemp, S, color=as.factor(spsID)))+
+#   geom_point()
+# ggplot(outMet, aes(aveTemp, log_slope, color=as.factor(spsID)))+
+#   geom_point()
+# ggplot(outMet, aes(aveTemp, gref, color=as.factor(spsID)))+
+#   geom_point()
+# 
+# ggplot(outMet, aes(Pr_week, gref, color=as.factor(spsID)))+
+#   geom_point()
+# ggplot(outMet, aes(Pr_week, log_slope, color=as.factor(spsID)))+
+#   geom_point()
+# ggplot(outMet, aes(Pr_week, S, color=as.factor(spsID)))+
+#   geom_point()
 
-#finalize data org for model
-spsDay <- unique(data.frame(doy=gcMod$doy,
-                            year=gcMod$year,
-                            siteid=gcMod$siteid,
-                            spsID=gcMod$spsID))
 
-spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
-spsData$spsDayID <- seq(1,nrow(spsData))
-
-spsIDJoin <- spsData %>%
-  select(doy,year,siteid,spsID,spsDayID)
-
-gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
-gcMod$gc.mmol.m2.s <- gcMod$gc.mol.m2.s*1000
+######## basic hierarchical model with no environmental drivers of parms
+# run basic model to ensure that covariate model of parms adds more explanatory
+# and predictive power
 # organize data for the model
-datalist <- list(Nobs=nrow(gcMod), 
-                 gs=gcMod$gc.mmol.m2.s,
-                 spsID.obs=gcMod$spsID,
-                 PAR = gcMod$PAR,
-                 spsDay = gcMod$spsDayID,
-                 D = gcMod$D,
-                 NspsDay=nrow(spsData),
-                 SPS=spsData$spsID, 
-                 airTcent = spsData$aveTemp-mean(spsData$aveTemp),
-                 pastpr = spsData$Pr_week,Nparm=3,
-                 NSPS=4)
-                 
-parms <- c( "a", "b", "d","l.slope", "slope.temp", "S","gref","rep.gs","sig.gs")
+# datalistB <- list(Nobs=nrow(gcMod), 
+#                  gs=gcMod$gc.mmol.m2.s,
+#                  spsID.obs=gcMod$spsID,
+#                  PAR = gcMod$PAR,
+#                  spsDay = gcMod$spsDayID,
+#                  D = gcMod$D,
+#                  NspsDay=nrow(spsData),
+#                  SPS=spsData$spsID, 
+#                  NSPS=4)
+# 
+# parmsB <- c( "alpha", "beta", "sig.alpha","delta","sig.delta","l.slope","slope.temp",  "sig.beta", "S","gref","rep.gs","sig.gs")
+# 
+# initB=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
+#                sig.beta=c(0.01,0.01,0.01,0.01),
+#                alpha=c(30,30,30,30),
+#                beta=c(1,1,1,1),
+#                sig.gs=c(10,10,10,10),
+#                delta=c(-4,-4,-4,-4),
+#                sig.delta=c(0.1,0.1,0.1,0.1)),
+#           list(sig.alpha=c(0.2,0.2,0.2,0.2),
+#                sig.beta=c(0.1,0.1,0.1,0.1),
+#                alpha=c(200,200,200,200),
+#                beta=c(1.2,1.2,1.2,1.2),
+#                sig.gs=c(30,30,30,30),
+#                delta=c(-1,-1,-1,-1),
+#                sig.delta=c(0.5,0.5,0.5,0.5)),
+#           list(sig.alpha=c(0.5,0.5,0.5,0.5),
+#                sig.beta=c(0.05,0.05,0.05,0.05),
+#                alpha=c(500,500,500,500),
+#                beta=c(0.8,0.8,0.8,0.8),
+#                sig.gs=c(100,100,100,100),
+#                delta=c(-6,-6,-6,-6),
+#                sig.delta=c(0.7,0.7,0.7,0.7)))
+# 
+# gc_modB <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code_basic.r",
+#                      data=datalistB, inits=initB,
+#                      n.adapt=20000,
+#                      n.chains=3)
+# 
+# gc_sampleB <- coda.samples(gc_modB, variable.names=parmsB, n.iter=90000, thin=30)
+# 
+# MCMCtrace(gc_sampleB, params=c("alpha", "beta","delta", "sig.alpha", "sig.beta", "sig.delta","S","l.slope","gref","sig.gs"),
+#           pdf=TRUE, 
+#           wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
+#           filename="gc_model_basic.pdf")
+# 
+# 
+# outB <- MCMCsummary(gc_sampleB,params=c("alpha", "beta","delta", "sig.alpha", "sig.beta", "sig.delta","sig.gs"))
+# S_outB <- MCMCsummary(gc_sampleB,params=c( "S"))
+# gr_outB <- MCMCsummary(gc_sampleB,params=c( "gref"))
+# l_outB <- MCMCsummary(gc_sampleB,params=c( "l.slope"))
+# grepB <- MCMCsummary(gc_sampleB,params=c( "rep.gs"))
+# log_slopeB <- MCMCsummary(gc_sampleB,params=c( "slope.temp"))
+# 
+# plot(grepB$mean, gcMod$gc.mmol.m2.s)
+# fitB <- lm(gcMod$gc.mmol.m2.s ~ grepB$mean)
+# summary(fitB)
+# summary(fit)
+# 
+# #similar R2, but hierarchical model has a little more bias.
+# 
+# 
+# # save results
+# write.csv(outB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/parms_out.csv")
+# write.csv(S_outB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/S_out.csv")
+# write.csv(gr_outB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/gr_out.csv")
+# write.csv(l_outB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/l_out.csv")
+# write.csv(grepB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/grep_out.csv")
+# 
+# write.csv(log_slopeB, 
+#           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/log_slope_out.csv")
 
-init=list(list(
-               a=matrix(c(130,130,130,130,
-                          0.1,0.1,0.1,0.1,
-                          0.01,0.01,0.01,0.01),ncol=4, byrow=TRUE),
-               b=matrix(c(1,1,1,1,
-                          0.01,0.01,0.01,0.01,
-                          0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
-               d=matrix(c(-8,-8,-8,-8,
-                          0.01,0.01,0.01,0.01,
-                          0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
-               sig.gs=c(100,100,100,100)),
-          list( a=matrix(c(230,230,230,230,
-                           0.01,0.01,0.01,0.01,
-                           0.001,0.001,0.001,0.001),ncol=4, byrow=TRUE),
-                b=matrix(c(1.2,1.2,1.2,1.2,
-                           -0.01,-0.01,-0.01,-0.01,
-                           -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
-                d=matrix(c(-5,-5,-5,-5,
-                           -0.01,-0.01,-0.01,-0.01,
-                           -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
-                sig.gs=c(120,120,120,120)),
-          list(a=matrix(c(180,180,180,180,
-                          -0.01,-0.01,-0.01,-0.01,
-                          -0.001,-0.001,-0.001,-0.001),ncol=4, byrow=TRUE),
-               b=matrix(c(0.8,0.8,0.8,0.8,
-                          0.2,0.2,0.2,0.2,
-                          -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
-               d=matrix(c(-3,-3,-3,-3,
-                          -0.2,-0.2,-0.2,-0.2,
-                          -0.1,-0.1,-0.1,-0.1),ncol=4, byrow=TRUE),
-               sig.gs=c(60,60,60,60)))
+#######################################################
+######## read in model results          ###############
 
-gc_mod <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code.r",
-                     data=datalist, inits=init,
-                     n.adapt=25000,
-                     n.chains=3)
-
-gc_sample <- coda.samples(gc_mod, variable.names=parms, n.iter=90000, thin=30)
-
-MCMCtrace(gc_sample, params=c("a", "b","d", "l.slope","S","gref","sig.gs"),
-          pdf=TRUE, 
-          wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
-          filename="gc_model.pdf")
-
-out <- MCMCsummary(gc_sample,params=c("a", "b","d","sig.gs"))
-S_out <- MCMCsummary(gc_sample,params=c( "S"))
-gr_out <- MCMCsummary(gc_sample,params=c( "gref"))
-l_out <- MCMCsummary(gc_sample,params=c( "l.slope"))
-grep <- MCMCsummary(gc_sample,params=c( "rep.gs"))
-log_slope <- MCMCsummary(gc_sample,params=c( "slope.temp"))
-plot(grep$mean, gcMod$gc.mmol.m2.s)
-fit <- lm(gcMod$gc.mmol.m2.s ~ grep$mean)
-summary(fit)
 
 # save results
-write.csv(out, 
-"/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/parms_out.csv")
-write.csv(S_out, 
+out <- read.csv( 
+          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/parms_out.csv")
+S_out <- read.csv( 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/S_out.csv")
-write.csv(gr_out, 
+gr_out <- read.csv( 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/gr_out.csv")
-write.csv(l_out, 
+l_out <- read.csv( 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/l_out.csv")
-write.csv(grep, 
+grep <- read.csv( 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/grep_out.csv")
 
-write.csv(log_slope, 
+log_slope <- read.csv( 
           "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/log_slope_out.csv")
 
 
@@ -369,100 +490,3 @@ outMet <- spsData
 outMet$S <- S_out$mean
 outMet$gref <- gr_out$mean
 outMet$log_slope <- log_slope$mean
-ggplot(outMet, aes(aveTemp, S, color=as.factor(spsID)))+
-  geom_point()
-ggplot(outMet, aes(aveTemp, log_slope, color=as.factor(spsID)))+
-  geom_point()
-ggplot(outMet, aes(aveTemp, gref, color=as.factor(spsID)))+
-  geom_point()
-
-ggplot(outMet, aes(Pr_week, gref, color=as.factor(spsID)))+
-  geom_point()
-ggplot(outMet, aes(Pr_week, log_slope, color=as.factor(spsID)))+
-  geom_point()
-ggplot(outMet, aes(Pr_week, S, color=as.factor(spsID)))+
-  geom_point()
-
-
-######## basic hierarchical model with no environmental drivers of parms
-# run basic model to ensure that covariate model of parms adds more explanatory
-# and predictive power
-# organize data for the model
-datalistB <- list(Nobs=nrow(gcMod), 
-                 gs=gcMod$gc.mmol.m2.s,
-                 spsID.obs=gcMod$spsID,
-                 PAR = gcMod$PAR,
-                 spsDay = gcMod$spsDayID,
-                 D = gcMod$D,
-                 NspsDay=nrow(spsData),
-                 SPS=spsData$spsID, 
-                 NSPS=4)
-
-parmsB <- c( "alpha", "beta", "sig.alpha","delta","sig.delta","l.slope","slope.temp",  "sig.beta", "S","gref","rep.gs","sig.gs")
-
-initB=list(list(sig.alpha=c(0.1,0.1,0.1,0.1),
-               sig.beta=c(0.01,0.01,0.01,0.01),
-               alpha=c(30,30,30,30),
-               beta=c(1,1,1,1),
-               sig.gs=c(10,10,10,10),
-               delta=c(-4,-4,-4,-4),
-               sig.delta=c(0.1,0.1,0.1,0.1)),
-          list(sig.alpha=c(0.2,0.2,0.2,0.2),
-               sig.beta=c(0.1,0.1,0.1,0.1),
-               alpha=c(200,200,200,200),
-               beta=c(1.2,1.2,1.2,1.2),
-               sig.gs=c(30,30,30,30),
-               delta=c(-1,-1,-1,-1),
-               sig.delta=c(0.5,0.5,0.5,0.5)),
-          list(sig.alpha=c(0.5,0.5,0.5,0.5),
-               sig.beta=c(0.05,0.05,0.05,0.05),
-               alpha=c(500,500,500,500),
-               beta=c(0.8,0.8,0.8,0.8),
-               sig.gs=c(100,100,100,100),
-               delta=c(-6,-6,-6,-6),
-               sig.delta=c(0.7,0.7,0.7,0.7)))
-
-gc_modB <- jags.model(file="/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_model_code_basic.r",
-                     data=datalistB, inits=initB,
-                     n.adapt=20000,
-                     n.chains=3)
-
-gc_sampleB <- coda.samples(gc_modB, variable.names=parmsB, n.iter=90000, thin=30)
-
-MCMCtrace(gc_sampleB, params=c("alpha", "beta","delta", "sig.alpha", "sig.beta", "sig.delta","S","l.slope","gref","sig.gs"),
-          pdf=TRUE, 
-          wd="/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/plots/model",
-          filename="gc_model_basic.pdf")
-
-
-outB <- MCMCsummary(gc_sampleB,params=c("alpha", "beta","delta", "sig.alpha", "sig.beta", "sig.delta","sig.gs"))
-S_outB <- MCMCsummary(gc_sampleB,params=c( "S"))
-gr_outB <- MCMCsummary(gc_sampleB,params=c( "gref"))
-l_outB <- MCMCsummary(gc_sampleB,params=c( "l.slope"))
-grepB <- MCMCsummary(gc_sampleB,params=c( "rep.gs"))
-log_slopeB <- MCMCsummary(gc_sampleB,params=c( "slope.temp"))
-
-plot(grepB$mean, gcMod$gc.mmol.m2.s)
-fitB <- lm(gcMod$gc.mmol.m2.s ~ grepB$mean)
-summary(fitB)
-summary(fit)
-
-#similar R2, but hierarchical model has a little more bias.
-
-
-# save results
-write.csv(outB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/parms_out.csv")
-write.csv(S_outB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/S_out.csv")
-write.csv(gr_outB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/gr_out.csv")
-write.csv(l_outB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/l_out.csv")
-write.csv(grepB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/grep_out.csv")
-
-write.csv(log_slopeB, 
-          "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/basic_model_var/08_13_25/log_slope_out.csv")
-
-
