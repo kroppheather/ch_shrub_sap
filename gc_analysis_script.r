@@ -266,19 +266,20 @@ unique(gcMod$doy)
 # library(MCMCvis)
 # 
 # #finalize data org for model
-# spsDay <- unique(data.frame(doy=gcMod$doy,
-#                             year=gcMod$year,
-#                             siteid=gcMod$siteid,
-#                             spsID=gcMod$spsID))
-# 
-# spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
-# spsData$spsDayID <- seq(1,nrow(spsData))
-# 
-# spsIDJoin <- spsData %>%
-#   select(doy,year,siteid,spsID,spsDayID)
-# 
-# gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
-# gcMod$gc.mmol.m2.s <- gcMod$gc.mol.m2.s*1000
+ spsDay <- unique(data.frame(doy=gcMod$doy,
+                             year=gcMod$year,
+                             siteid=gcMod$siteid,
+                             spsID=gcMod$spsID))
+
+
+ spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
+ spsData$spsDayID <- seq(1,nrow(spsData))
+
+ spsIDJoin <- spsData %>%
+  select(doy,year,siteid,spsID,spsDayID)
+
+ gcMod <- left_join(gcMod,spsIDJoin, by=c("doy","year","siteid","spsID"))
+ gcMod$gc.mmol.m2.s <- gcMod$gc.mol.m2.s*1000
 # # organize data for the model
 # datalist <- list(Nobs=nrow(gcMod), 
 #                  gs=gcMod$gc.mmol.m2.s,

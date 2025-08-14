@@ -74,7 +74,7 @@ colDF <- data.frame(spsID= seq(1,4),
 #################################################################
 ################## Daily Transpiration   ########################
 #################################################################
-
+metDaily$Prday_cm <- metDaily$Prday/10
 
 wd <- 45
 hd <- 10
@@ -104,7 +104,7 @@ llc <- 3
 #point size
 pcx <- 3
 
-png(paste0(plotDir,"\\Tday.png"), width = 59, height = 28, units = "cm", res=300)
+png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
 	par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
@@ -112,7 +112,7 @@ png(paste0(plotDir,"\\Tday.png"), width = 59, height = 28, units = "cm", res=300
 	#add precip
 	for(i in 1:nrow(metDaily)){
 		polygon(c(metDaily$doy[i]-0.25,metDaily$doy[i]-0.25,metDaily$doy[i]+0.25,metDaily$doy[i]+0.25),
-			c(0,metDaily$Prday[i]*prScale,metDaily$Prday[i]*prScale,0), border=NA, col=rgb(115,194,251,100,maxColorValue=255))
+			c(0,metDaily$Prday_cm[i]*prScale,metDaily$Prday_cm[i]*prScale,0), border=NA, col=rgb(115,194,251,100,maxColorValue=255))
 	}	
 	#air temp
 	points(metDaily$doy[metDaily$siteid == 2], metDaily$aveTemp[metDaily$siteid == 2], pch=19, type="b", cex=pcx)
