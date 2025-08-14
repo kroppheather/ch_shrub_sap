@@ -179,7 +179,7 @@ tdayDF$spsID <- ifelse(tdayDF$siteid==1&tdayDF$species == "Alnus",1,
 
 metDaily <- metDF %>%
   group_by(doy, year, siteid) %>%
-  summarise(
+  summarise(Prday = sum(Pr.mm),
             aveVPD = mean(D),
             aveTemp = mean(temp))
 
@@ -490,3 +490,9 @@ outMet <- spsData
 outMet$S <- S_out$mean
 outMet$gref <- gr_out$mean
 outMet$log_slope <- log_slope$mean
+outMet$l_slope <- l_out$mean
+
+
+
+rm(list=setdiff(ls(), c("sapFlow","sensor","specFlow","specTday","gcSpec","outMet",
+                        "metDaily","tdayDF", "gcMod","out")))
