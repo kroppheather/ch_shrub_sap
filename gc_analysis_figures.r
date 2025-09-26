@@ -194,7 +194,7 @@ xseq <- seq(1,4)+0.25
 xseqA <- seq(0,5)+0.25
 
 
-png(paste0(plotDir,"\\T_ramet.png"), width = 20, height = 20, units = "cm", res=300)
+png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=300)
 	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
 	par(mai=c(0,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
