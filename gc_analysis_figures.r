@@ -135,9 +135,7 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
 	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
-	polygon(c(189.75,189.75,190.25,190.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
-	polygon(c(221.75,221.75,222.25,222.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
-	polygon(c(229.75,229.75,230.25,230.25), c(0,5,5,0), border=NA, col=rgb(237,237,237, maxColorValue=255))
+
 	for(i in 1:4){	
 		points(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i], pch=19, col=coli[i],
 			type="b", cex=pcx)
