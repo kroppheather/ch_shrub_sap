@@ -36,6 +36,19 @@ source("/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_analysis_script.r")
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/manuscript/figures"
 
 
+##################################
+# gc calc for plotting           #
+##################################
+
+# get maximum daily gc
+
+
+DayGC <- gcMod %>%
+  group_by(spsID, doy) %>%
+  summarize(mean_gc= mean(gc.mmol.m2.s),
+            sd= sd(gc.mmol.m2.s),
+            ncount = n())
+DayGC$se <- DayGC$sd/sqrt(DayGC$ncount)	
 
 ##################################
 # Vegetation colors for plotting #
@@ -82,6 +95,8 @@ xl <- 180
 xh <- 240.5
 yl2 <- 0
 yh2 <- 5
+yl3 <- 0
+yh3 <- 500
 
 yl <- 0
 yh <- 25
@@ -93,6 +108,7 @@ xseq <- seq(180, 240, by=5)
 yseq <- seq(0,25, by=5)
 yseq2 <- seq(0,35, by=5)*prScale
 yseq3 <- seq(0,5, by=1)
+yseq4 <- seq(0,500, by=50)
 #tick width
 tlw <- 3
 #axis tick label size
@@ -104,8 +120,8 @@ llc <- 3
 #point size
 pcx <- 3
 
-png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
-	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
+png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
+	layout(matrix(c(1,2,3),ncol=1), width=lcm(wd),height=rep(lcm(hd),3))
 	par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
@@ -151,6 +167,21 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
 	mtext("Day of Year", side=1, line=5, cex=llc)
 	legend("topleft", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix))), pch=19, col=c(coli[1],coli[2]), bty="n", cex=2)
 	legend("topright", c(expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))), pch=19, col=c(coli[3],coli[4]), bty="n", cex=2)
+# GC plot
+		par(mai=c(0.25,0,0,0))
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)
+	for(i in 1:4){	
+	  points(DayGC$doy[DayGC$spsID==i],DayGC$mean_gc[DayGC$spsID==i], pch=19, col=coli[i],
+	         type="b", cex=pcx)
+	  arrows(DayGC$doy[DayGC$spsID==i],DayGC$mean_gc[DayGC$spsID==i]-DayGC$se[DayGC$spsID==i],
+	         DayGC$doy[DayGC$spsID==i],DayGC$mean_gc[DayGC$spsID==i]+DayGC$se[DayGC$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5),lwd=3)
+	}
+	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
+	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
+	axis(2, yseq4, rep(" ", length(yseq4)), lwd.ticks=tlw, lwd=alw)
+	mtext(yseq4, at=yseq4, side=2, line=2, cex=alc, las=2)
+	
 dev.off()	
 	
 	
@@ -226,251 +257,35 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 #################################################################
 ################## Patterns in stomatal conductance##############
 #################################################################	
-#unlist gc
 
-#fit regression
-fit <- list()
-Int <- numeric()
-Slope <- numeric()
-minD <- numeric(0)
-maxD <- numeric(0)
-
-for(i in 1:nrow(gcDayN)){
-	fit[[i]] <- lm(gcDF2$gc.mol.m2.s[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]] ~ 
-					log(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]]))
-	Int[i] <- coefficients(fit[[i]])[1]
-	Slope[i] <- coefficients(fit[[i]])[2] 
-	minD[i] <- min(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]])
-	maxD[i] <- max(gcDF2$D[gcDF2$doy == gcDayN$doy[i] & gcDF2$spsID == gcDayN$spsID[i]])
-}
-
-gcDayN$slope <- Slope
-gcDayN$Int <- Int
-gcDayN$S <- abs(gcDayN$slope)/gcDayN$Int
-plot(gcDayN$spsID, gcDayN$S)
-wd <- 9
-hd <- 9
-xl <- 0.5
-xh <- 1.75
-
-
-yl <- 0
-yh <- 0.75
-
-
-xseq <- seq(0.5,1.75, by=0.25)
-yseq <- seq(0,0.7, by =0.1)
-#tick width
-tlw <- 2
-#axis tick label size
-alc <- 1.5
-#axis width 
-alw <- 2
-#axis label size
-llc <- 2
-#point size
-pcx <- 2
-#line thickness
-llw <- 3
-#legend size
-lcx <- 1.25
-
-
-
-##########first day ##########
-doy1 <- 190
-
-gcDay1N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy1) 
-gcDay1N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy1) 
-gcDay1N3 <- which(gcDayN$spsID == 3 & gcDayN$doy == doy1) 
-gcDay1N4 <- which(gcDayN$spsID == 4 & gcDayN$doy == doy1) 
-
-png(paste0(plotDir,"\\gcDay1.png"), width = 16, height = 15, units = "cm", res=300)
-	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
-	par(mai=c(0,0,0,0))
-		plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-			xlab= " ", ylab=" ", axes=FALSE)	
-		#add all points
-			points(gcDF2$D[gcDF2$doy == doy1 & gcDF2$spsID == 1], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy1 & gcDF2$spsID == 1], pch=19, col=as.character(colDF$col3[1]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy1 & gcDF2$spsID == 2], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy1 & gcDF2$spsID == 2], pch=19, col=as.character(colDF$col3[2]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy1 & gcDF2$spsID == 3], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy1 & gcDF2$spsID == 3], pch=19, col=as.character(colDF$col3[3]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy1 & gcDF2$spsID == 4], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy1 & gcDF2$spsID == 4], pch=19, col=as.character(colDF$col3[4]), cex=pcx)	
-		#add slope
-			points(seq(minD[gcDay1N1],maxD[gcDay1N1], length.out=100), Int[gcDay1N1] + (Slope[gcDay1N1]*log(seq(minD[gcDay1N1],maxD[gcDay1N1], length.out=100))), 
-				type="l", col=as.character(colDF$coli[1]),
-				lwd=llw)
-			points(seq(minD[gcDay1N2],maxD[gcDay1N2], length.out=100), Int[gcDay1N2] + (Slope[gcDay1N2]*log(seq(minD[gcDay1N2],maxD[gcDay1N2], length.out=100))), 
-				type="l", col=as.character(colDF$coli[2]),
-				lwd=llw)
-			points(seq(minD[gcDay1N3],maxD[gcDay1N3], length.out=100), Int[gcDay1N3] + (Slope[gcDay1N3]*log(seq(minD[gcDay1N3],maxD[gcDay1N3], length.out=100))), 
-				type="l", col=as.character(colDF$coli[3]),
-				lwd=llw)
-				
-			points(seq(minD[gcDay1N4],maxD[gcDay1N4], length.out=100), Int[gcDay1N4] + (Slope[gcDay1N4]*log(seq(minD[gcDay1N4],maxD[gcDay1N4], length.out=100))), 
-				type="l", col=as.character(colDF$coli[4]),
-				lwd=llw)	
-		axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
-	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
-	mtext(yseq, at=yseq, side=2, line=1, cex=alc, las=2)
-	mtext(xseq, at=xseq, side=1, line=1, cex=alc)
-	mtext(expression(paste("Canopy stomatal conductance ")), side=2, line=5, cex=llc)
-	mtext(expression(paste("(mol m"^"-2","s"^"-1",")")), side=2, line=3, cex=llc)
-	mtext("Vapor pressure deficit (kPa)", side=1, line=3, cex=llc)
-	mtext(paste("Day of year",doy1), side=3, line=3, cex=llc)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=19,
-					col=c(as.character(colDF$col3[1]),
-							as.character(colDF$col3[2]),
-							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=lcx)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=NA,lwd=llw,
-					col=c(as.character(colDF$coli[1]),
-							as.character(colDF$coli[2]),
-							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=lcx)	
-dev.off()	
-
-
-
-##########second day ##########
-doy2 <- 222
-
-gcDay2N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy2) 
-gcDay2N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy2) 
-gcDay2N3 <- which(gcDayN$spsID == 3 & gcDayN$doy == doy2) 
-gcDay2N4 <- which(gcDayN$spsID == 4 & gcDayN$doy == doy2) 
-
-png(paste0(plotDir,"\\gcDay2.png"), width = 16, height = 15, units = "cm", res=300)
-	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
-	par(mai=c(0,0,0,0))
-		plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-			xlab= " ", ylab=" ", axes=FALSE)	
-		#add all points
-			points(gcDF2$D[gcDF2$doy == doy2 & gcDF2$spsID == 1], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy2 & gcDF2$spsID == 1], pch=19, col=as.character(colDF$col3[1]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy2 & gcDF2$spsID == 2], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy2 & gcDF2$spsID == 2], pch=19, col=as.character(colDF$col3[2]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy2 & gcDF2$spsID == 3], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy2 & gcDF2$spsID == 3], pch=19, col=as.character(colDF$col3[3]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy2 & gcDF2$spsID == 4], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy2 & gcDF2$spsID == 4], pch=19, col=as.character(colDF$col3[4]), cex=pcx)	
-		#add slope
-			points(seq(minD[gcDay2N1],maxD[gcDay2N1], length.out=100), Int[gcDay2N1] + (Slope[gcDay2N1]*log(seq(minD[gcDay2N1],maxD[gcDay2N1], length.out=100))), 
-				type="l", col=as.character(colDF$coli[1]),
-				lwd=llw)
-			points(seq(minD[gcDay2N2],maxD[gcDay2N2], length.out=100), Int[gcDay2N2] + (Slope[gcDay2N2]*log(seq(minD[gcDay2N2],maxD[gcDay2N2], length.out=100))), 
-				type="l", col=as.character(colDF$coli[2]),
-				lwd=llw)
-			points(seq(minD[gcDay2N3],maxD[gcDay2N3], length.out=100), Int[gcDay2N3] + (Slope[gcDay2N3]*log(seq(minD[gcDay2N3],maxD[gcDay2N3], length.out=100))), 
-				type="l", col=as.character(colDF$coli[3]),
-				lwd=llw)
-				
-			points(seq(minD[gcDay2N4],maxD[gcDay2N4], length.out=100), Int[gcDay2N4] + (Slope[gcDay2N4]*log(seq(minD[gcDay2N4],maxD[gcDay2N4], length.out=100))), 
-				type="l", col=as.character(colDF$coli[4]),
-				lwd=llw)	
-		axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
-	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
-	mtext(yseq, at=yseq, side=2, line=1, cex=alc, las=2)
-	mtext(xseq, at=xseq, side=1, line=1, cex=alc)
-	mtext(expression(paste("Canopy stomatal conductance ")), side=2, line=5, cex=llc)
-	mtext(expression(paste("(mol m"^"-2","s"^"-1",")")), side=2, line=3, cex=llc)
-	mtext("Vapor pressure deficit (kPa)", side=1, line=3, cex=llc)
-	mtext(paste("Day of year",doy2), side=3, line=3, cex=llc)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=19,
-					col=c(as.character(colDF$col3[1]),
-							as.character(colDF$col3[2]),
-							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=lcx)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=NA,lwd=llw,
-					col=c(as.character(colDF$coli[1]),
-							as.character(colDF$coli[2]),
-							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=lcx)	
-dev.off()	
-
-
-
-##########third day ##########
-doy3 <- 230
-
-gcDay3N1 <- which(gcDayN$spsID == 1 & gcDayN$doy == doy3) 
-gcDay3N2 <- which(gcDayN$spsID == 2 & gcDayN$doy == doy3) 
-gcDay3N3 <- which(gcDayN$spsID == 3 & gcDayN$doy == doy3) 
-gcDay3N4 <- which(gcDayN$spsID == 4 & gcDayN$doy == doy3) 
-
-png(paste0(plotDir,"\\gcDay3.png"), width = 16, height = 15, units = "cm", res=300)
-	layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
-	par(mai=c(0,0,0,0))
-		plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl,yh), xaxs="i",yaxs="i",
-			xlab= " ", ylab=" ", axes=FALSE)	
-		#add all points
-			points(gcDF2$D[gcDF2$doy == doy3 & gcDF2$spsID == 1], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy3 & gcDF2$spsID == 1], pch=19, col=as.character(colDF$col3[1]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy3 & gcDF2$spsID == 2], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy3 & gcDF2$spsID == 2], pch=19, col=as.character(colDF$col3[2]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy3 & gcDF2$spsID == 3], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy3 & gcDF2$spsID == 3], pch=19, col=as.character(colDF$col3[3]), cex=pcx)
-			points(gcDF2$D[gcDF2$doy == doy3 & gcDF2$spsID == 4], 
-				gcDF2$gc.mol.m2.s[gcDF2$doy == doy3 & gcDF2$spsID == 4], pch=19, col=as.character(colDF$col3[4]), cex=pcx)	
-		#add slope
-			points(seq(minD[gcDay3N1],maxD[gcDay3N1], length.out=100), Int[gcDay3N1] + (Slope[gcDay3N1]*log(seq(minD[gcDay3N1],maxD[gcDay3N1], length.out=100))), 
-				type="l", col=as.character(colDF$coli[1]),
-				lwd=llw)
-			points(seq(minD[gcDay3N2],maxD[gcDay3N2], length.out=100), Int[gcDay3N2] + (Slope[gcDay3N2]*log(seq(minD[gcDay3N2],maxD[gcDay3N2], length.out=100))), 
-				type="l", col=as.character(colDF$coli[2]),
-				lwd=llw)
-			points(seq(minD[gcDay3N3],maxD[gcDay3N3], length.out=100), Int[gcDay3N3] + (Slope[gcDay3N3]*log(seq(minD[gcDay3N3],maxD[gcDay3N3], length.out=100))), 
-				type="l", col=as.character(colDF$coli[3]),
-				lwd=llw)
-				
-			points(seq(minD[gcDay3N4],maxD[gcDay3N4], length.out=100), Int[gcDay2N4] + (Slope[gcDay3N4]*log(seq(minD[gcDay3N4],maxD[gcDay3N4], length.out=100))), 
-				type="l", col=as.character(colDF$coli[4]),
-				lwd=llw)	
-		axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
-	axis(2, yseq, rep(" ", length(yseq)), lwd.ticks=tlw, lwd=alw)
-	mtext(yseq, at=yseq, side=2, line=1, cex=alc, las=2)
-	mtext(xseq, at=xseq, side=1, line=1, cex=alc)
-	mtext(expression(paste("Canopy stomatal conductance ")), side=2, line=5, cex=llc)
-	mtext(expression(paste("(mol m"^"-2","s"^"-1",")")), side=2, line=3, cex=llc)
-	mtext("Vapor pressure deficit (kPa)", side=1, line=3, cex=llc)
-	mtext(paste("Day of year",doy3), side=3, line=3, cex=llc)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=19,
-					col=c(as.character(colDF$col3[1]),
-							as.character(colDF$col3[2]),
-							as.character(colDF$col3[3]),
-							as.character(colDF$col3[4])), bty="n", cex=lcx)
-	legend("topright", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix)),
-						expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))),
-			pch=NA,lwd=llw,
-					col=c(as.character(colDF$coli[1]),
-							as.character(colDF$coli[2]),
-							as.character(colDF$coli[3]),
-							as.character(colDF$coli[4])), bty="n", cex=lcx)	
-dev.off()	
-
-
-
-#check for days with all species for comparision
-s1 <- gcDayN[gcDayN$spsID == 1,]
-s2 <- gcDayN[gcDayN$spsID == 2,]
-s3 <- gcDayN[gcDayN$spsID == 3,]
-s4 <- gcDayN[gcDayN$spsID == 4,]
-
-a1 <- inner_join(s1,s2, by="doy")
-a2 <- inner_join(a1, s3, by="doy")
-a3 <- inner_join(a2, s4, by="doy")
-
-
+	wd <- 45
+	hd <- 10
+	xl <- 180
+	xh <- 240.5
+	yl2 <- 0
+	yh2 <- 5
+	
+	yl <- 0
+	yh <- 25
+	prMax <- 35
+	prScale <- yh/prMax
+	Dscale <- yh/3.5
+	
+	xseq <- seq(180, 240, by=5)
+	yseq <- seq(0,25, by=5)
+	yseq2 <- seq(0,35, by=5)*prScale
+	yseq3 <- seq(0,5, by=1)
+	#tick width
+	tlw <- 3
+	#axis tick label size
+	alc <- 2
+	#axis width 
+	alw <- 2
+	#axis label size
+	llc <- 3
+	#point size
+	pcx <- 3
+	
+	png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
+	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
+	par(mai=c(0.25,0,0,0))
