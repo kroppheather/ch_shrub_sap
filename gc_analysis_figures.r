@@ -96,7 +96,7 @@ xh <- 240.5
 yl2 <- 0
 yh2 <- 5
 yl3 <- 0
-yh3 <- 500
+yh3 <- 525
 
 yl <- 0
 yh <- 25
@@ -116,11 +116,15 @@ alc <- 2
 #axis width 
 alw <- 2
 #axis label size
-llc <- 3
+llc <- 2.5
 #point size
 pcx <- 3
 # line axis labels
-ll1 <- 7
+ll1 <- 8
+ll2 <- 13
+ll3 <- 17
+# legend size
+lcx <- 2.5
 
 png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	layout(matrix(c(1,2,3),ncol=1), width=lcm(wd),height=rep(lcm(hd),3))
@@ -141,15 +145,15 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	axis(4, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq, at=yseq, side=2, line=2, cex=alc, las=2)
 	mtext(seq(0,35, by=5)/10, at=yseq2, side=4, line=2, cex=alc, las=2)
-	mtext(expression(paste("Air temperature")), side=2, line=13, cex=llc)
+	mtext(expression(paste("Air temperature")), side=2, line=ll2, cex=llc)
 	mtext(expression(paste("(",degree,"C)")), side=2, line=ll1 , cex=llc)	
 	mtext("Precipitation", side=4, line=ll1 , cex=llc)
-	mtext("Vapor pressure deficit (VPD)", side=4, line=13, cex=llc)
-	mtext("(cm, kPa)", side=4, line=17, cex=llc)
+	mtext("Vapor pressure deficit (VPD)", side=4, line=ll2, cex=llc)
+	mtext("(cm, kPa)", side=4, line=ll3, cex=llc)
 	legend("topleft", c("Temperature upland", "Precipitation"), pch=c(19, 15), 
-		col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2.5)
+		col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=lcx)
 	legend("topright", c( "VPD floodplain","VPD upland"), pch=c(19,19), 
-		col=c(col=rgb(.74,.74,.74,.75), col=rgb(.82,.7,.54,.75)), bty="n", cex=2.5)
+		col=c(col=rgb(.74,.74,.74,.75), col=rgb(.82,.7,.54,.75)), bty="n", cex=lcx)
 	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
@@ -160,14 +164,18 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 		arrows(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]-tdayDF$L.m2.daySD[tdayDF$spsID==i],
 		tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]+tdayDF$L.m2.daySD[tdayDF$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5),lwd=3)
 	}
-	
+	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
 	axis(2, yseq3, rep(" ", length(yseq3)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq3, at=yseq3, side=2, line=2, cex=alc, las=2)
-	mtext(expression(paste("Transpiration ")), side=2, line=13, cex=llc)
+	mtext(expression(paste("Transpiration ")), side=2, line=ll2, cex=llc)
 	mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=ll1 , cex=llc)
 
-	legend("topleft", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix))), pch=19, col=c(coli[1],coli[2]), bty="n", cex=2)
-	legend("topright", c(expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))), pch=19, col=c(coli[3],coli[4]), bty="n", cex=2)
+	legend("topleft", c(expression("Floodplain"~italic(Alnus)), 
+	                    expression("Floodplain"~italic(Salix))), 
+	       pch=19, col=c(coli[1],coli[2]), bty="n", cex=lcx)
+	legend("topright", c(expression("Upland"~italic(Betula)), 
+	                     expression("Upland"~italic(Salix))), 
+	       pch=19, col=c(coli[3],coli[4]), bty="n", cex=lcx)
 # GC plot
 		par(mai=c(0.25,0,0,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
@@ -185,8 +193,14 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	mtext("Day of Year", side=1, line=5, cex=llc)
 	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
 	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
-	mtext(expression(paste("Canopy conductance ")), side=2, line=13, cex=llc)
+	mtext(expression(paste("Canopy conductance ")), side=2, line=ll2, cex=llc)
 	mtext(expression(paste("(mmol m"^"-2","s"^"-1",")")), side=2, line=ll1 , cex=llc)
+	legend("topleft", c(expression("Floodplain"~italic(Alnus)), 
+	                    expression("Floodplain"~italic(Salix))), 
+	       pch=19, col=c(coli[1],coli[2]), bty="n", cex=lcx)
+	legend("topright", c(expression("Upland"~italic(Betula)), 
+	                     expression("Upland"~italic(Salix))), 
+	       pch=19, col=c(coli[3],coli[4]), bty="n", cex=lcx)
 dev.off()	
 	
 	
