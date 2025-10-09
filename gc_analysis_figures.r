@@ -242,6 +242,7 @@ pcx <- 2
 llw <- 3
 xseq <- seq(1,4)+0.25
 xseqA <- seq(0,5)+0.25
+yseq <- seq(0,0.7,by=0.1)
 
 
 png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=300)
