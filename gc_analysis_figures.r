@@ -34,7 +34,7 @@ source("/Users/hkropp/Documents/GitHub/ch_shrub_sap/gc_analysis_script.r")
 # set up directories             #
 ##################################
 plotDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/manuscript/figures"
-
+modDir <- "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/"
 
 ##################################
 # gc calc for plotting           #
@@ -49,6 +49,30 @@ DayGC <- gcMod %>%
             sd= sd(gc.mmol.m2.s),
             ncount = n())
 DayGC$se <- DayGC$sd/sqrt(DayGC$ncount)	
+
+
+##################################
+# model results.                #
+#################################
+
+
+
+# save results
+out <- read.csv( 
+  paste0(modDir,"/parms_out.csv"))
+S_out <- read.csv( 
+  "/S_out.csv")
+gr_out <- read.csv( 
+  "/gr_out.csv")
+l_out <- read.csv( 
+  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/l_out.csv")
+grep <- read.csv( 
+  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/grep_out.csv")
+
+log_slope <- read.csv( 
+  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/log_slope_out.csv")
+
+
 
 ##################################
 # Vegetation colors for plotting #
