@@ -108,7 +108,7 @@ xseq <- seq(180, 240, by=5)
 yseq <- seq(0,25, by=5)
 yseq2 <- seq(0,35, by=5)*prScale
 yseq3 <- seq(0,5, by=1)
-yseq4 <- seq(0,500, by=50)
+yseq4 <- seq(0,450, by=75)
 #tick width
 tlw <- 3
 #axis tick label size
@@ -119,6 +119,8 @@ alw <- 2
 llc <- 3
 #point size
 pcx <- 3
+# line axis labels
+ll1 <- 7
 
 png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	layout(matrix(c(1,2,3),ncol=1), width=lcm(wd),height=rep(lcm(hd),3))
@@ -139,15 +141,15 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	axis(4, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq, at=yseq, side=2, line=2, cex=alc, las=2)
 	mtext(seq(0,35, by=5)/10, at=yseq2, side=4, line=2, cex=alc, las=2)
-	mtext(expression(paste("Air temperature")), side=2, line=9, cex=llc)
-	mtext(expression(paste("(",degree,"C)")), side=2, line=5, cex=llc)	
-	mtext("Precipitation", side=4, line=6, cex=llc)
-	mtext("Vapor pressure deficit (VPD)", side=4, line=9, cex=llc)
-	mtext("(cm, kPa)", side=4, line=12, cex=llc)
+	mtext(expression(paste("Air temperature")), side=2, line=13, cex=llc)
+	mtext(expression(paste("(",degree,"C)")), side=2, line=ll1 , cex=llc)	
+	mtext("Precipitation", side=4, line=ll1 , cex=llc)
+	mtext("Vapor pressure deficit (VPD)", side=4, line=13, cex=llc)
+	mtext("(cm, kPa)", side=4, line=17, cex=llc)
 	legend("topleft", c("Temperature upland", "Precipitation"), pch=c(19, 15), 
-		col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2)
+		col=c("black",rgb(115,194,251,100,maxColorValue=255)), bty="n", cex=2.5)
 	legend("topright", c( "VPD floodplain","VPD upland"), pch=c(19,19), 
-		col=c(col=rgb(.74,.74,.74,.75), col=rgb(.82,.7,.54,.75)), bty="n", cex=2)
+		col=c(col=rgb(.74,.74,.74,.75), col=rgb(.82,.7,.54,.75)), bty="n", cex=2.5)
 	par(mai=c(0,0,0.25,0))
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl,xh), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 		xlab= " ", ylab=" ", axes=FALSE)
@@ -158,13 +160,12 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 		arrows(tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]-tdayDF$L.m2.daySD[tdayDF$spsID==i],
 		tdayDF$doy[tdayDF$spsID==i],tdayDF$L.m2.day[tdayDF$spsID==i]+tdayDF$L.m2.daySD[tdayDF$spsID==i],code=0, col=rgb(0.5,0.5,0.5,0.5),lwd=3)
 	}
-	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
-	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
+	
 	axis(2, yseq3, rep(" ", length(yseq3)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq3, at=yseq3, side=2, line=2, cex=alc, las=2)
-	mtext(expression(paste("Transpiration ")), side=2, line=9, cex=llc)
-	mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=5, cex=llc)
-	mtext("Day of Year", side=1, line=5, cex=llc)
+	mtext(expression(paste("Transpiration ")), side=2, line=13, cex=llc)
+	mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=ll1 , cex=llc)
+
 	legend("topleft", c(expression("Floodplain"~italic(Alnus)), expression("Floodplain"~italic(Salix))), pch=19, col=c(coli[1],coli[2]), bty="n", cex=2)
 	legend("topright", c(expression("Upland"~italic(Betula)), expression("Upland"~italic(Salix))), pch=19, col=c(coli[3],coli[4]), bty="n", cex=2)
 # GC plot
@@ -181,7 +182,11 @@ png(paste0(plotDir,"/Tday.png"), width = 59, height = 40, units = "cm", res=300)
 	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
 	axis(2, yseq4, rep(" ", length(yseq4)), lwd.ticks=tlw, lwd=alw)
 	mtext(yseq4, at=yseq4, side=2, line=2, cex=alc, las=2)
-	
+	mtext("Day of Year", side=1, line=5, cex=llc)
+	axis(1, xseq, rep(" ", length(xseq)), lwd.ticks=tlw, lwd=alw)
+	mtext(xseq, at=xseq, side=1, line=2, cex=alc)
+	mtext(expression(paste("Canopy conductance ")), side=2, line=13, cex=llc)
+	mtext(expression(paste("(mmol m"^"-2","s"^"-1",")")), side=2, line=ll1 , cex=llc)
 dev.off()	
 	
 	
