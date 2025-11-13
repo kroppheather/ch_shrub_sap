@@ -60,17 +60,17 @@ DayGC$se <- DayGC$sd/sqrt(DayGC$ncount)
 # save results
 out <- read.csv( 
   paste0(modDir,"/parms_out.csv"))
-S_out <- read.csv( 
-  "/S_out.csv")
-gr_out <- read.csv( 
-  "/gr_out.csv")
-l_out <- read.csv( 
-  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/l_out.csv")
-grep <- read.csv( 
-  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/grep_out.csv")
+S_out <- read.csv( paste0( modDir,
+  "/S_out.csv"))
+gr_out <- read.csv( paste0(modDir,
+  "/gr_out.csv"))
+l_out <- read.csv(paste0(modDir, 
+  "/l_out.csv"))
+grep <- read.csv( paste0(modDir,
+  "/grep_out.csv"))
 
-log_slope <- read.csv( 
-  "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/shrub_sapflow/model_output/full_model_var/08_13_25_15_36/log_slope_out.csv")
+log_slope <- read.csv(paste0(modDir,
+  "/log_slope_out.csv"))
 
 
 
