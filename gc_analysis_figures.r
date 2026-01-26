@@ -330,6 +330,6 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 	#point size
 	pcx <- 3
 	
-	png(paste0(plotDir,"/Tday.png"), width = 59, height = 28, units = "cm", res=300)
+	png(paste0(plotDir,"/gc_day.png"), width = 59, height = 28, units = "cm", res=300)
 	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
 	par(mai=c(0.25,0,0,0))
