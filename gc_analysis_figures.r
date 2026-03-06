@@ -50,6 +50,18 @@ DayGC <- gcMod %>%
             ncount = n())
 DayGC$se <- DayGC$sd/sqrt(DayGC$ncount)	
 
+# #finalize data org for model
+spsDay <- unique(data.frame(doy=gcMod$doy,
+                            year=gcMod$year,
+                            siteid=gcMod$siteid,
+                            spsID=gcMod$spsID))
+
+
+spsData <- left_join(spsDay, metDaily, by=c("doy","year","siteid"))
+spsData$spsDayID <- seq(1,nrow(spsData))
+
+#sps id: 1 Alnus floodplain, 2: Salix floodplain, 3: betula upland, 4: salix upland
+
 
 ##################################
 # model results.                #
@@ -73,6 +85,18 @@ log_slope <- read.csv(paste0(modDir,
   "/log_slope_out.csv"))
 
 
+# add model results to all data for plotting
+head(S_out)
+spsParam <- spsData
+spsParam$S_mean <- S_out$mean
+spsParam$S_pc2.5 <- S_out$X2.5.
+spsParam$S_pc97.5 <- S_out$X97.5.
+spsParam$gr_mean <- gr_out$mean
+spsParam$gr_pc2.5 <- gr_out$X2.5.
+spsParam$gr_pc97.5 <- gr_out$X97.5.
+spsParam$l_mean <- log_slope$mean
+spsParam$l_pc2.5 <- log_slope$X2.5.
+spsParam$l_pc97.5 <- log_slope$X97.5.
 
 ##################################
 # Vegetation colors for plotting #
@@ -302,18 +326,18 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 ################## Patterns in stomatal conductance##############
 #################################################################	
 
-	wd <- 45
-	hd <- 10
-	xl <- 180
-	xh <- 240.5
-	yl2 <- 0
-	yh2 <- 5
-	
-	yl <- 0
-	yh <- 25
-	prMax <- 35
-	prScale <- yh/prMax
-	Dscale <- yh/3.5
+	wd <- 20
+	hd <- 20
+	xl1 <- 5
+	xh1 <- 25
+	xl2 <- 0
+	xh2 <- 50	
+	yl1 <- 0
+	yh1 <- 700
+	yl2 <- 0.5
+	yh2 <- 2
+	yl3 <- -8
+	yh3 <- -4
 	
 	xseq <- seq(180, 240, by=5)
 	yseq <- seq(0,25, by=5)
@@ -330,6 +354,30 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 	#point size
 	pcx <- 3
 	
-	png(paste0(plotDir,"/gc_day.png"), width = 59, height = 28, units = "cm", res=300)
-	layout(matrix(c(1,2),ncol=1), width=lcm(wd),height=rep(lcm(hd),2))
+	png(paste0(plotDir,"/gc_param_plots.png"), width = 55, height = 75, units = "cm", res=300)
+	layout(matrix(c(1,6),ncol=2, byrow=TRUE), width=rep(lcm(wd),2),height=rep(lcm(hd),3))
 	par(mai=c(0.25,0,0,0))
+	# gr vs temp
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	# gr vs week pr
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	
+	# S vs temp
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	# S vs week pr
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	
+	
+	# S vs temp
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	# S vs week pr
+	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
+	     xlab= " ", ylab=" ", axes=FALSE)	
+	
+	
+	dev.off()
