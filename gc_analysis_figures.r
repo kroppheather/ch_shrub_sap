@@ -98,6 +98,24 @@ spsParam$l_mean <- log_slope$mean
 spsParam$l_pc2.5 <- log_slope$X2.5.
 spsParam$l_pc97.5 <- log_slope$X97.5.
 
+out$sig <- ifelse(out$X2.5.>0 & out$X97.5. >0, 1,
+                  ifelse(out$X2.5.<0 & out$X97.5. <0,1,0))
+
+g_reg <- out[1:12,]
+g_reg$spsID <- rep(seq(1,4), each=3)
+g_reg$param <- rep(seq(0,2), times=4)
+
+
+S_reg <- out[13:24,]
+S_reg$spsID <- rep(seq(1,4), each=3)
+S_reg$param <- rep(seq(0,2), times=4)
+
+
+l_reg <- out[25:36,]
+l_reg$spsID <- rep(seq(1,4), each=3)
+l_reg$param <- rep(seq(0,2), times=4)
+
+
 ##################################
 # Vegetation colors for plotting #
 ##################################
@@ -339,10 +357,12 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 	yl3 <- -8
 	yh3 <- -4
 	
-	xseq <- seq(180, 240, by=5)
-	yseq <- seq(0,25, by=5)
-	yseq2 <- seq(0,35, by=5)*prScale
-	yseq3 <- seq(0,5, by=1)
+	xseq1 <- seq(0, 30, by=5)
+	xseq2 <- seq(0, 50, by=10)
+	yseq1 <- seq(0,700, by=100)
+	yseq2 <- seq(0.4,2, by=0.2)
+	yseq3 <- seq(-8,-4, by=1)
+
 	#tick width
 	tlw <- 3
 	#axis tick label size
@@ -355,29 +375,62 @@ png(paste0(plotDir,"/T_ramet.png"), width = 20, height = 20, units = "cm", res=3
 	pcx <- 3
 	
 	png(paste0(plotDir,"/gc_param_plots.png"), width = 55, height = 75, units = "cm", res=300)
-	layout(matrix(c(1,6),ncol=2, byrow=TRUE), width=rep(lcm(wd),2),height=rep(lcm(hd),3))
+	layout(matrix(1:6,ncol=2, byrow=TRUE), width=rep(lcm(wd),2),height=rep(lcm(hd),3))
 	par(mai=c(0.25,0,0,0))
+	
 	# gr vs temp
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
+	for(i in 1:4){
+	  points(spsParam$aveTemp[spsParam$spsID == i],
+	         spsParam$gr_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}
+	
+	axis(1, xseq1, rep(" ", length(xseq1)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq1, rep(" ", length(yseq1)), lwd.ticks=tlw, lwd=alw)
 	# gr vs week pr
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl1,yh1), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
-	
+	for(i in 1:4){
+	  points(spsParam$Pr_week[spsParam$spsID == i],
+	         spsParam$gr_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}	
+	axis(1, xseq2, rep(" ", length(xseq2)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq1, rep(" ", length(yseq1)), lwd.ticks=tlw, lwd=alw)
 	# S vs temp
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
+	for(i in 1:4){
+	  points(spsParam$aveTemp[spsParam$spsID == i],
+	         spsParam$S_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}
+	axis(1, xseq1, rep(" ", length(xseq1)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
 	# S vs week pr
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl2,yh2), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
-	
-	
-	# S vs temp
+	for(i in 1:4){
+	  points(spsParam$Pr_week[spsParam$spsID == i],
+	         spsParam$S_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}	
+	axis(1, xseq2, rep(" ", length(xseq2)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq2, rep(" ", length(yseq2)), lwd.ticks=tlw, lwd=alw)
+	# log slope vs temp
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl1,xh1), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
+	for(i in 1:4){
+	  points(spsParam$aveTemp[spsParam$spsID == i],
+	         spsParam$l_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}
+	axis(1, xseq1, rep(" ", length(xseq1)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq3, rep(" ", length(yseq3)), lwd.ticks=tlw, lwd=alw)
 	# S vs week pr
 	plot(c(0,1),c(0,1), type="n", xlim=c(xl2,xh2), ylim=c(yl3,yh3), xaxs="i",yaxs="i",
 	     xlab= " ", ylab=" ", axes=FALSE)	
-	
-	
+	for(i in 1:4){
+	  points(spsParam$Pr_week[spsParam$spsID == i],
+	         spsParam$l_mean[spsParam$spsID == i],col=coli[i],pch=19, cex=pcx)
+	}	
+	axis(1, xseq2, rep(" ", length(xseq2)), lwd.ticks=tlw, lwd=alw)
+	axis(2, yseq3, rep(" ", length(yseq3)), lwd.ticks=tlw, lwd=alw)
 	dev.off()
